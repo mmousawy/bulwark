@@ -1,21 +1,21 @@
 {
-  "name": "turbo-broccoli",
+  "name": "turbo-bulwark",
   "version": "0.0.1",
-  "description": "Race against each other and prove you are the fastest broccoli in the universe.",
+  "description": "Defend your planet against incoming attacks.",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/doubtingreality/turbo-broccoli.git"
+    "url": "git+https://github.com/doubtingreality/turbo-bulwark.git"
   },
   "author": "Murtada al Mousawy and Kaleigh Hunter",
   "license": "AGPL-3.0",
   "bugs": {
-    "url": "https://github.com/doubtingreality/turbo-broccoli/issues"
+    "url": "https://github.com/doubtingreality/turbo-bulwark/issues"
   },
-  "homepage": "https://github.com/doubtingreality/turbo-broccoli#readme",
+  "homepage": "https://github.com/doubtingreality/turbo-bulwark#readme",
   "dependencies": {
     "pixi.js": "^4.0.3",
     "socket.io": "^1.4.8",
