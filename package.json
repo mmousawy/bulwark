@@ -1,5 +1,5 @@
 {
-  "name": "turbo-bulwark",
+  "name": "bulwark",
   "version": "0.0.1",
   "description": "Defend your planet against incoming attacks.",
   "main": "index.js",
