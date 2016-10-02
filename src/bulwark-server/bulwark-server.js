@@ -6,15 +6,16 @@ const io = require('socket.io')(server);
 console.log('[1/2] Server and socket.io module loaded');
 
 io.on('connection', function(socket) {
-  console.log('User connected!');
+  io.sockets.emit('player-join');
+  //socket.broadcast.emit('player-join');
 
   socket.on('event', function(data){});
 
   // Listen to click event
-  socket.on('click', function(data) {
+  socket.on('player-click', function(data) {
     // Log a message with the position
     console.log(`A user clicked on the location x: ${data.x}, y: ${data.y}`);
-    io.sockets.emit('render-click', data);  
+    io.sockets.emit('player-click', data);
   });
 
   socket.on('disconnect', function() {
