@@ -1,0 +1,24 @@
+{
+  "name": "turbo-broccoli",
+  "version": "0.0.1",
+  "description": "Race against each other and prove you are the fastest broccoli in the universe.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/doubtingreality/turbo-broccoli.git"
+  },
+  "author": "Murtada al Mousawy and Kaleigh Hunter",
+  "license": "AGPL-3.0",
+  "bugs": {
+    "url": "https://github.com/doubtingreality/turbo-broccoli/issues"
+  },
+  "homepage": "https://github.com/doubtingreality/turbo-broccoli#readme",
+  "dependencies": {
+    "pixi.js": "^4.0.3",
+    "socket.io": "^1.4.8",
+    "socket.io-client": "^1.4.8"
+  }
+}
