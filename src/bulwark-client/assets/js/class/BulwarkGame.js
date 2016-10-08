@@ -1,47 +1,53 @@
-export default class BulwarkGame {
+class BulwarkGame {
 
   constructor() {
-    this.SETTINGS = {};
+    this.settings = {};
 
     return {
-      SETTINGS: this.SETTINGS,
-      init: this.init.bind(this),
-      gameLoop: this.gameLoop.bind(this),
-      addPlayer: this.addPlayer.bind(this),
-      addCircle: this.addCircle.bind(this)
+      settings: this.settings,
+      init: this.init,
+      gameLoop: this.gameLoop,
+      logicLoop: this.logicLoop,
+      addCircle: this.addCircle
     }
   }
 
-  init(canvas_holder) {
-    this.SETTINGS.holder = canvas_holder;
+  init(canvas_holder, bRender, bGame, bInput, bClient) {
+    this.settings.holder = canvas_holder;
+    this.settings.bRender = bRender;
+    this.settings.bGame = bGame;
+    this.settings.bInput = bInput;
+    this.settings.bClient = bClient;
   }
 
   gameLoop() {
-    player.rotation = bulwark_input.mouseAngleFromPoint({x: 0, y: 0});
-    console.log(player.rotation);
+    window.requestAnimationFrame(bGame.gameLoop.bind(this));
+
+    const logic = bGame.logicLoop.bind(bGame);
+    logic(this.settings.bRender, this.settings.bGame, this.settings.bInput, this.settings.bClient);
+
+    const render = bRender.renderLoop.bind(bRender);
+    render(this.settings.bRender, this.settings.bGame, this.settings.bInput, this.settings.bClient);
+
+    const input = bInput.inputLoop.bind(bInput);
+    input(this.settings.bRender, this.settings.bGame, this.settings.bInput, this.settings.bClient);
+  }
+
+  logicLoop(bRender, bGame, bInput, bClient) {
+    if (bRender.settings.current_player) {
+      bClient.settings.socket.emit('player-update', {
+        id: bClient.settings.current_player.id,
+        rotation: bClient.settings.current_player.rotation,
+        x: bClient.settings.current_player.x,
+        y: bClient.settings.current_player.y
+      });
+    }
   }
 
   addCircle(data, bRender) {
     console.log('Add circle');
-    bRender.SETTINGS.graphics.beginFill(0xA08080);
-    bRender.SETTINGS.graphics.drawCircle(data.x, data.y, 10);
-    bRender.SETTINGS.graphics.endFill();
-  }
-
-  addPlayer(data, bRender) {
-    console.log('Add player');
-    const player_graphics = new PIXI.Graphics();
-
-    player_graphics.beginFill(0x80A0A0);
-    player_graphics.moveTo(0,0);
-    player_graphics.lineTo(-15, 30);
-    player_graphics.lineTo(15, 30);
-    player_graphics.endFill();
-
-    const player = new PIXI.Sprite(player_graphics.generateTexture());
-    player.anchor.x = 0.5;
-    player.anchor.y = 0.5;
-
-    bRender.SETTINGS.stage.addChild(player);
+    bRender.settings.graphics.beginFill(0xA08080);
+    bRender.settings.graphics.drawCircle(data.x, data.y, 10);
+    bRender.settings.graphics.endFill();
   }
 }

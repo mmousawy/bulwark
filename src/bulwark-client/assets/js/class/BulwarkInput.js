@@ -1,7 +1,7 @@
-export default class BulwarkInput {
+class BulwarkInput {
 
   constructor(canvas_holder) {
-    this.SETTINGS = {};
+    this.settings = {};
 
     this.INPUT = {
       mouse: {
@@ -11,23 +11,24 @@ export default class BulwarkInput {
     };
 
     return {
-      SETTINGS: this.SETTINGS,
+      settings: this.settings,
       INPUT: this.INPUT,
       init: this.init.bind(this),
+      inputLoop: this.inputLoop.bind(this),
       mouseAngleFromPoint: this.mouseAngleFromPoint.bind(this)
     }
   }
 
-  init(canvas_holder, client) {
-    this.SETTINGS.holder = canvas_holder;
-    this.SETTINGS.client = client;
-    this.SETTINGS.holder.addEventListener('click', this.clickHandler.bind(this));
-    this.SETTINGS.holder.addEventListener('mousemove', this.moveHandler.bind(this));
+  init(canvas_holder, bClient) {
+    this.settings.holder = canvas_holder;
+    this.settings.bClient = bClient;
+    this.settings.holder.addEventListener('click', this.clickHandler.bind(this));
+    this.settings.holder.addEventListener('mousemove', this.moveHandler.bind(this));
   }
 
   updateMouse(mouseEvent) {
-    this.INPUT.mouse.x = Math.round( ( mouseEvent.clientX - this.SETTINGS.holder.offsetLeft ) * .5 );
-    this.INPUT.mouse.y = Math.round( ( mouseEvent.clientY - this.SETTINGS.holder.offsetTop ) * .5 );
+    this.INPUT.mouse.x = Math.round( ( mouseEvent.clientX - this.settings.holder.offsetLeft ) * .5 );
+    this.INPUT.mouse.y = Math.round( ( mouseEvent.clientY - this.settings.holder.offsetTop ) * .5 );
   }
 
   mouseAngleFromPoint(pointData = {dx: 0, dy: 0}, degrees) {
@@ -40,7 +41,7 @@ export default class BulwarkInput {
     const mouse_angle = Math.atan2(dm_point.dy, dm_point.dx);
 
     if (degrees) {
-      return mouse_angle * 180 / Math.PI;
+      return mouse_angle * ( 180 / Math.PI );
     }
 
     return mouse_angle;
@@ -53,9 +54,13 @@ export default class BulwarkInput {
   clickHandler(mouseEvent) {
     this.updateMouse(mouseEvent);
 
-    const client = this.SETTINGS.client;
+    const bClient = this.settings.bClient;
 
     // Emmit cursor position on click
-    client.SETTINGS.socket.emit('player-click', { x: this.INPUT.mouse.x, y: this.INPUT.mouse.y } );
+    bClient.settings.socket.emit('player-click', { x: this.INPUT.mouse.x, y: this.INPUT.mouse.y } );
+  }
+
+  inputLoop() {
+    // Nothing here yet
   }
 }
