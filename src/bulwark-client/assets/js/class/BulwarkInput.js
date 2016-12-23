@@ -57,7 +57,7 @@ class BulwarkInput {
     const bClient = this.settings.bClient;
 
     // Emmit cursor position on click
-    bClient.settings.socket.emit('player-click', { x: this.INPUT.mouse.x, y: this.INPUT.mouse.y } );
+    bClient.settings.socket.emit('client-click', { x: this.INPUT.mouse.x, y: this.INPUT.mouse.y } );
   }
 
   inputLoop() {

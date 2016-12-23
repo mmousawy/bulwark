@@ -1,7 +1,14 @@
 @import "reset";
 
+@font-face {
+  font-family: 'Fiery_Turk';
+  src: url('../fonts/Fiery_Turk.ttf') format('truetype');
+  font-weight: 400;
+}
+
 html, body {
   height: 100%;
+  font: 16px 'Fiery_Turk', monospace;
 }
 
 body {
@@ -9,6 +16,18 @@ body {
   justify-content: center;
   align-items: center;
   background-color: grey;
+  font-smooth: never;
+  -webkit-font-smoothing : none;
+  overflow: hidden;
+}
+
+body * {
+  image-rendering: optimizeSpeed;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: optimize-contrast;
+  image-rendering: pixelated;
+  -ms-interpolation-mode: nearest-neighbor;
 }
 
 .canvas-holder {
@@ -17,12 +36,282 @@ body {
 }
 
 canvas {
-  image-rendering: optimizeSpeed;
-  image-rendering: -moz-crisp-edges;
-  image-rendering: -webkit-optimize-contrast;
-  image-rendering: optimize-contrast;
-  image-rendering: pixelated;
-  -ms-interpolation-mode: nearest-neighbor;
   transform: scale(2);
   transform-origin: 0 0;
+}
+
+.modal-overlay {
+  z-index: 99;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+
+  .modal-holder {
+    display: block;
+    position: relative;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) translateZ(0);
+  }
+}
+
+.modal {
+  display: inline-block;
+  position: relative;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) translateZ(0);
+  min-width: 10rem;
+  max-width: 100vw;
+  padding: 1rem;
+  background-image: url('../img/modal-background.gif');
+  border: 2px solid;
+  border-image: url('../img/border-normal.gif') 2;
+  border-image-repeat: repeat;
+  background-clip: padding-box;
+  box-shadow: 0 0 0 2px rgba(0,0,0,.125), 0 0 0 4px rgba(0,0,0,.125), 0 0 0 6px rgba(0,0,0,.125);
+  white-space: nowrap;
+  overflow: hidden;
+
+  .overlay__rooms-holder {
+    float: left;
+    margin-right: 1rem;
+
+    .title {
+      color: #fff;
+      margin-bottom: .5rem;
+    }
+
+    .rooms-content {
+      border: 2px solid;
+      border-image: url('../img/border-normal.gif') 2;
+      background: rgba(0,0,0,.25);
+      color: #fff;
+      outline: 0;
+      width: 12rem;
+      height: 13rem;
+      margin-bottom: 1rem;
+    }
+
+    .create_room_button {
+      width: 11rem;
+    }
+  }
+
+  .overlay__chat-holder {
+    float: left;
+
+    .chat-content {
+      margin-bottom: 1rem;
+      border: 2px solid;
+      border-image: url('../img/border-normal.gif') 2;
+      border-image-repeat: repeat;
+      background: rgba(0,0,0,.25);
+      color: #fff;
+      outline: 0;
+      width: 20rem;
+      height: 15rem;
+      overflow-y: auto;
+      overflow-x: hidden;
+
+      > div {
+        padding: 0 .5rem;
+        white-space: pre-wrap;
+        word-break: break-all;
+
+        &.server-message {
+          color: #a973c9;
+        }
+      }
+    }
+
+    .chat_input {
+      width: calc(20rem - 6rem);
+    }
+
+    .chat_button {
+      width: 4rem;
+    }
+  }
+
+  .overlay__clients-holder {
+    float: left;
+    margin-left: 1rem;
+
+    .title {
+      color: #fff;
+      margin-bottom: .5rem;
+      text-align: right;
+    }
+
+    .clients-content {
+      border: 2px solid;
+      border-image: url('../img/border-normal.gif') 2;
+      border-image-repeat: repeat;
+      background: rgba(0,0,0,.25);
+      color: #fff;
+      outline: 0;
+      width: 12rem;
+      height: 16.75rem;
+      overflow: auto;
+
+      > div {
+        padding: 0 .5rem;
+        cursor: pointer;
+        overflow: hidden;
+        text-overflow: ellipsis;
+
+        &:hover {
+          background: rgba(255,255,255, .5);
+        }
+      }
+    }
+  }
+
+  p {
+    margin-bottom: 1rem;
+    text-align: center;
+    color: #ffffff;
+  }
+
+  .icon {
+    display: block;
+    width: 32px;
+    height: 32px;
+    margin: 0 auto 1rem;
+
+    &--disconnected {
+      background-image: url('../img/icon-disconnected.png');
+      background-size: 100%;
+    }
+  }
+
+  img {
+    display: block;
+    margin: 0 auto 1rem;
+  }
+
+  input {
+    padding: .5rem;
+
+    &.centered {
+      display: block;
+      margin: 0 auto;
+    }
+
+    &[type=text] {
+      box-sizing: border-box;
+      margin-right: 1rem;
+      border: 2px solid;
+      border-image: url('../img/border-normal.gif') 2;
+      border-image-repeat: repeat;
+      background: rgba(0,0,0,.25);
+      color: #fff;
+      outline: 0;
+
+      &::-webkit-input-placeholder {
+        color: rgba(255,255,255,.5);
+      }
+
+      &::-moz-placeholder {
+        color: rgba(255,255,255,.5);
+      }
+
+      &:focus {
+        border-image: url('../img/border-white.gif') 2;
+        border-image-repeat: repeat;
+      }
+    }
+
+    &[type=submit],
+    &[type=button] {
+      box-sizing: content-box;
+      color: #fff;
+      border: 2px solid;
+      border-image: url('../img/border-normal.gif') 2;
+      border-image-repeat: repeat;
+      background: rgba(59, 94, 197, 0.25);
+      outline: 0;
+      cursor: pointer;
+      background-clip: padding-box;
+      vertical-align: top;
+
+      &.login-button {
+        width: 4rem;
+      }
+
+      &:hover {
+        border-image: url('../img/border-white.gif') 2;
+        border-image-repeat: repeat;
+      }
+
+      &:focus {
+        border-image: url('../img/border-white.gif') 2;
+        border-image-repeat: repeat;
+        background-color: rgba(59, 94, 197, 0.5);
+      }
+    }
+  }
+}
+
+.bulwark-logo {
+  width: 196px;
+  height: 48px;
+  margin: 0 auto 1rem;
+  background-image: url('../img/bulwark-logo.png');
+}
+
+@keyframes scale_up_choppy {
+  0% {
+    max-width: 0%;
+    max-height: 0%;
+  }
+  24% {
+    max-width: 0%;
+    max-height: 0%;
+  }
+  25% {
+    max-width: 25%;
+    max-height: 25%;
+  }
+  49% {
+    max-width: 25%;
+    max-height: 25%;
+  }
+  50% {
+    max-width: 50%;
+    max-height: 50%;
+  }
+  74% {
+    max-width: 50%;
+    max-height: 50%;
+  }
+  75% {
+    max-width: 75%;
+    max-height: 75%;
+  }
+  99% {
+    max-width: 75%;
+    max-height: 75%;
+  }
+  100% {
+    max-width: 100%;
+    max-height: 100%;
+  }
+}
+
+/* Let's get this party started */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+  border: 2px solid;
+  border-image: url('../img/border-normal.gif') 2;
+  border-image-repeat: repeat;
+  background-clip: padding-box;
+  background: rgba(255,255,255, .25);
 }

@@ -1,5 +1,5 @@
 const bServer = {
-  PLAYERS: []
+  clients: {}
 };
 
 console.log('>>> Starting server...');
@@ -9,32 +9,56 @@ const io = require('socket.io')(server);
 
 console.log('[1/2] Server and socket.io module loaded');
 
-io.on('connection', function(socket) {
-  const current_player = addPlayer();
+io.sockets.on('connection', function(socket) {
+  const current_client = newClient();
+  console.log(`Client connected with id ${current_client.id}`);
 
-  //io.sockets.emit('player-join', current_player);
-  socket.broadcast.emit('player-join', current_player);
-  socket.emit('self-join', current_player);
+  socket.emit('clients-list', bServer.clients);
 
-  console.log(`User joined with id ${current_player.id}`);
+  socket.on('clients-list', function() {
+    console.log('Requesting clients list');
+    socket.emit('clients-list', bServer.clients);
+  });
 
-  socket.on('event', function(data){});
+  socket.on('chat-message', function(data) {
+    console.log("Chat message received", data);
+    io.sockets.emit('new-chat-message', data);
+  });
 
-  // Listen to click event
-  socket.on('player-click', function(data) {
+  // Listen to signin event
+  socket.on('client-signin', function(data) {
+    console.log(data);
+    console.log(`A client with id ${current_client.id} signed in with nickname: ${data.nickname}`);
+    addClient(current_client, data);
+    socket.broadcast.emit('client-signin', data);
+    socket.join('main-lobby');
+    current_client.location = 'main-lobby';
+    socket.emit('self-signin', current_client);
+
+    // Emit new clients list to all clients
+    io.sockets.emit('clients-list', bServer.clients);
+  });
+
+  socket.on('client-click', function(data) {
     // Log a message with the position
     console.log(`A user clicked on the location x: ${data.x}, y: ${data.y}`);
-    io.sockets.emit('player-click', data);
+    io.sockets.emit('client-click', data);
   });
 
-  // Listen to player update event
-  socket.on('player-update', function(data) {
+  // Listen to client update event
+  socket.on('client-update', function(data) {
     // Log a message with the position
-    socket.broadcast.emit('player-update', data);
+    socket.broadcast.emit('client-update', data);
   });
 
-  socket.on('disconnect', function() {
-    console.log('User disconnected!');
+  socket.on('disconnect', function(data) {
+    // Emit new clients list to all clients
+    removeClient(current_client);
+    console.log(`${current_client.id} disconnected!`);
+    if (current_client.nickname) {
+      socket.broadcast.emit('client-signoff', current_client);
+    }
+    socket.broadcast.emit('clients-list', bServer.clients);
   });
 });
 
@@ -44,14 +68,34 @@ server.listen(3000);
 
 //
 
-function addPlayer() {
-  const player = {
+function newClient() {
+  const client = {
     id: genID()
   }
 
-  bServer.PLAYERS.push(player);
+  console.log(`Client connected with id ${client.id}`);
 
-  return player;
+  return client;
+}
+
+function addClient(client, data) {
+  client.nickname = data.nickname;
+
+  bServer.clients[client.id] = client;
+
+  console.log(`Client signed in with nickname ${data.nickname}`);
+  console.log("Current clients list (" + (Object.keys(bServer.clients).length) + "): ");
+  console.log(bServer.clients);
+
+  return true;
+}
+
+function removeClient(current_client) {
+  if (bServer.clients[current_client.id] == current_client) {
+    delete bServer.clients[current_client.id];
+  }
+  console.log("Current clients list (" + (Object.keys(bServer.clients).length) + "): ");
+  console.log(bServer.clients);
 }
 
 function genID() {
