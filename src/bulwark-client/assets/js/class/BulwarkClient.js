@@ -7,10 +7,16 @@ class BulwarkClient {
       settings: this.settings,
       init: this.init.bind(this),
       connect: this.connect.bind(this),
+      disconnect: this.disconnect.bind(this),
+      createRoom: this.createRoom.bind(this),
+      joinRoom: this.joinRoom.bind(this),
+      leaveRoom: this.leaveRoom.bind(this),
+      
+      startGame: this.startGame.bind(this),
       signin: this.signin.bind(this),
       refreshClients: this.refreshClients.bind(this),
+      refreshRooms: this.refreshRooms.bind(this),
       sendChatMessage: this.sendChatMessage.bind(this),
-      disconnect: this.disconnect.bind(this),
       listen: this.listen.bind(this)
     }
   }
@@ -35,7 +41,7 @@ class BulwarkClient {
   connect() {
     console.log("Initializing socket");
     this.settings.socket = io('http://127.0.0.1:3000/', { 'force new connection': true });
-    this.settings.clients = [];
+    this.settings.clients = null;
     this.settings.clients_ids = [];
     this.settings.current_client = null;
 
@@ -98,6 +104,11 @@ class BulwarkClient {
       callback(data);
     });
 
+    this.settings.socket.on('client-leave', (data) => {
+      const callback = this.handleClientLeave.bind(this);
+      callback(data);
+    });
+
     this.settings.socket.on('client-update', (data) => {
       const callback = this.handleClientUpdate.bind(this);
       callback(data);
@@ -108,9 +119,35 @@ class BulwarkClient {
       callback(data);
     });
 
-    this.settings.socket.on('event', function(data){});
+    //Rooms
+    this.settings.socket.on('rooms-list', (data) => {
+      this.settings.rooms_list = data;
+      this.settings.bPubSub.publish("refresh-rooms-done", data);
+    });
 
-    this.settings.socket.on('disconnect', function(){});
+    this.settings.socket.on('join-room-done', (data) => {
+      const callback = this.handleJoinRoomDone.bind(this);
+      callback(data);
+    });
+
+    this.settings.socket.on('create-room-done', (data) => {
+      const callback = this.handleCreateRoomDone.bind(this);
+      callback(data);
+    });
+
+    this.settings.socket.on('create-room-self', (data) => {
+      this.settings.bPubSub.publish("create-room-self", data);
+    });
+
+    this.settings.socket.on('leave-room-done', (data) => {
+      this.settings.bPubSub.publish("leave-room-done", data);
+    });
+
+    //Game
+    this.settings.socket.on('start-game', () => {
+      this.settings.bPubSub.publish("start-game");
+    });
+
   }
 
   refreshClients() {
@@ -118,9 +155,23 @@ class BulwarkClient {
     console.log("Refreshing clients");
   }
 
+  refreshRooms() {
+    this.settings.socket.emit('rooms-list');
+    console.log("Refreshing rooms");
+  }
+
   handleClientJoin(data) {
-    const client_sprite = bRender.addClient(data, bRender);
-    this.addClient(data, client_sprite);
+    data.message = `${data.nickname} joined the room`;
+    this.settings.bUI.addChatMessage(data, 'server-message');
+    //const client_sprite = bRender.addClient(data, bRender);
+    //this.addClient(data, client_sprite);
+  }
+
+  handleClientLeave(data) {
+    data.message = `${data.nickname} left the room`;
+    this.settings.bUI.addChatMessage(data, 'server-message');
+    //const client_sprite = bRender.addClient(data, bRender);
+    //this.addClient(data, client_sprite);
   }
 
   handleSelfJoin(data) {
@@ -148,16 +199,17 @@ class BulwarkClient {
 
   handleSelfSignin(data) {
     console.log("Signed in!");
-
     this.settings.current_client = data;
-    this.settings.bUI.removeModal("signin");
-    this.settings.bUI.createModal('main_lobby');
-    this.settings.bClient.refreshClients();
+
+    this.settings.bUI.showLobby();
+
+    data.message = `You joined the room ${this.settings.current_client.location}`;
+    this.settings.bUI.addChatMessage(data, 'server-message-self');
   }
 
   handleClientUpdate(data) {
-    if (this.settings.clients_ids[data.id]) {
-      const client = this.settings.clients_ids[data.id];
+    if (this.settings.clients_ids[data.client_id]) {
+      const client = this.settings.clients_ids[data.client_id];
 
       client.rotation = data.rotation;
       client.x = data.x;
@@ -173,14 +225,41 @@ class BulwarkClient {
       data.y = 0;
 
       const clients_size = this.settings.clients.push(data);
-      this.settings.clients_ids[data.id] = this.settings.clients[clients_size-1];
+      this.settings.clients_ids[data.client_id] = this.settings.clients[clients_size-1];
 
-      console.log(data.id, this.settings.clients_ids[data.id]);
+      console.log(data.client_id, this.settings.clients_ids[data.client_id]);
 
       if (is_self) {
         this.settings.current_client = data;
-        console.log(`You have joined with id: ${data.id}`);
+        console.log(`You have joined with id: ${data.client_id}`);
       }
     }
+  }
+
+  //Rooms
+  createRoom(data) {
+    this.settings.socket.emit('create-room', data);
+  }
+
+  joinRoom(data) {
+    this.settings.socket.emit('join-room', data);
+  }
+
+  leaveRoom() {
+    this.settings.socket.emit('leave-room');
+  }
+
+  handleCreateRoomDone(data) {
+    this.settings.bPubSub.publish("create-room-done", data);
+    console.log(data);
+  }
+
+  handleJoinRoomDone(data) {
+    this.settings.bPubSub.publish("join-room-done", data);
+  }
+
+  //Game
+  startGame() {
+    this.settings.socket.emit('start-game');
   }
 }

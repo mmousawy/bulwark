@@ -28,6 +28,13 @@ body * {
   image-rendering: optimize-contrast;
   image-rendering: pixelated;
   -ms-interpolation-mode: nearest-neighbor;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  cursor: default;
 }
 
 .canvas-holder {
@@ -75,28 +82,55 @@ canvas {
   white-space: nowrap;
   overflow: hidden;
 
+  .title {
+    color: #fff;
+    margin-bottom: 1rem;
+    line-height: 1.5rem;
+  }
+
   .overlay__rooms-holder {
     float: left;
     margin-right: 1rem;
 
-    .title {
-      color: #fff;
-      margin-bottom: .5rem;
-    }
-
     .rooms-content {
       border: 2px solid;
       border-image: url('../img/border-normal.gif') 2;
+      border-image-repeat: repeat;
       background: rgba(0,0,0,.25);
       color: #fff;
       outline: 0;
       width: 12rem;
-      height: 13rem;
+      height: 17rem;
       margin-bottom: 1rem;
+
+      > div {
+        padding: 0 .5rem;
+        cursor: pointer;
+        overflow: hidden;
+        text-overflow: ellipsis;
+
+        > * {
+          pointer-events: none;
+        }
+
+        > div {
+          float: right;
+        }
+
+        &:hover {
+          background: rgba(59,94,197,0.25);
+        }
+      }
+    }
+
+    .show_create_room_button {
+      width: 11rem;
+      float: right;
     }
 
     .create_room_button {
-      width: 11rem;
+      width: 6rem;
+      margin-right: 0;
     }
   }
 
@@ -112,39 +146,39 @@ canvas {
       color: #fff;
       outline: 0;
       width: 20rem;
-      height: 15rem;
+      height: 15.5rem;
       overflow-y: auto;
       overflow-x: hidden;
 
       > div {
         padding: 0 .5rem;
         white-space: pre-wrap;
-        word-break: break-all;
+        word-break: break-word;
 
         &.server-message {
           color: #a973c9;
+        }
+
+        &.server-message-self {
+          color: #c98f73;
         }
       }
     }
 
     .chat_input {
-      width: calc(20rem - 6rem);
+      width: 19rem;
+      margin-right: 0;
     }
 
     .chat_button {
       width: 4rem;
+      display: none;
     }
   }
 
   .overlay__clients-holder {
     float: left;
     margin-left: 1rem;
-
-    .title {
-      color: #fff;
-      margin-bottom: .5rem;
-      text-align: right;
-    }
 
     .clients-content {
       border: 2px solid;
@@ -154,7 +188,7 @@ canvas {
       color: #fff;
       outline: 0;
       width: 12rem;
-      height: 16.75rem;
+      height: 20.75rem;
       overflow: auto;
 
       > div {
@@ -164,7 +198,7 @@ canvas {
         text-overflow: ellipsis;
 
         &:hover {
-          background: rgba(255,255,255, .5);
+          background: rgba(59,94,197,0.25);
         }
       }
     }
@@ -202,13 +236,14 @@ canvas {
     }
 
     &[type=text] {
-      box-sizing: border-box;
+      box-sizing: content-box;
       margin-right: 1rem;
       border: 2px solid;
       border-image: url('../img/border-normal.gif') 2;
       border-image-repeat: repeat;
       background: rgba(0,0,0,.25);
       color: #fff;
+      cursor: text;
       outline: 0;
 
       &::-webkit-input-placeholder {
@@ -251,6 +286,61 @@ canvas {
         border-image: url('../img/border-white.gif') 2;
         border-image-repeat: repeat;
         background-color: rgba(59, 94, 197, 0.5);
+      }
+
+      &[disabled] {
+        color: #90A7C8;
+        opacity: .5;
+        pointer-events: none;
+        cursor: default;
+      }
+    }
+  }
+
+  &-create_room {
+
+    input[type=button].cancel_room_button {
+      position: absolute;
+      background-image: url('../img/close-button.gif');
+      background-repeat: no-repeat;
+      background-position: 50%;
+      width: 1.5rem;
+      height: 1.5rem;
+      top: 1rem;
+      right: 1rem;
+      padding: 0;
+    }
+
+  }
+
+  &-room {
+
+    input[type=submit].room_leave_button {
+      position: absolute;
+      background-image: url('../img/close-button.gif');
+      background-repeat: no-repeat;
+      background-position: 50%;
+      width: 1.5rem;
+      height: 1.5rem;
+      top: 1rem;
+      right: 1rem;
+      padding: 0;
+    }
+
+    .room_start_button {
+      float: right;
+    }
+
+    .overlay__clients-holder {
+      .clients-content {
+        height: 15rem;
+        margin-bottom: 1rem;
+      }
+    }
+
+    .overlay__chat-holder {
+      .chat-content {
+        height: 15rem;
       }
     }
   }

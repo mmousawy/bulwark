@@ -2,6 +2,8 @@ class BulwarkRender {
 
   constructor() {
     this.settings = {};
+    this.scenes = {};
+    this.scene = null;
 
     this.intro = {
       stars: [],
@@ -10,6 +12,8 @@ class BulwarkRender {
 
     return {
       settings:        this.settings,
+      scenes:          this.scenes,
+      scene:           this.scene,
       init:            this.init.bind(this),
       render:          this.render.bind(this),
       addClient:       this.addClient.bind(this),
@@ -54,6 +58,9 @@ class BulwarkRender {
   }
 
   initIntro() {
+    this.scenes.intro = new PIXI.DisplayObjectContainer();
+    this.scene = "intro";
+
     let star_texture = new PIXI.Graphics();
     star_texture.beginFill(0xffffff);
     star_texture.drawRect(0, 0, 1, 1);
@@ -96,7 +103,7 @@ class BulwarkRender {
       star_sprite.scale.x = Math.round(Math.random()*2);
       star_sprite.scale.y = star_sprite.scale.x;
 
-      this.settings.stage.addChild(star_sprite);
+      this.scenes.intro.addChild(star_sprite);
 
       this.intro.stars.push(star_sprite);
     }
@@ -108,7 +115,9 @@ class BulwarkRender {
 
     background.z = 2;
 
-    this.settings.stage.addChild(background);
+    this.scenes.intro.addChild(background);
+
+    this.settings.stage.addChild(this.scenes.intro);
   }
 
   componentToHex(c) {
@@ -144,7 +153,7 @@ class BulwarkRender {
   renderLoopMain(bRender, bGame, bInput, bClient) {
     if (bClient.settings.clients) {
       for (let client of bClient.settings.clients) {
-        if (client.id == bClient.settings.current_client.id) {
+        if (client.client_id == bClient.settings.current_client.client_id) {
           if (bRender.settings.current_client) {
             bClient.settings.current_client.rotation = bInput.mouseAngleFromPoint( { x: bRender.settings.current_client.x, y: bRender.settings.current_client.y } );
             client.sprite.rotation = bClient.settings.current_client.rotation;

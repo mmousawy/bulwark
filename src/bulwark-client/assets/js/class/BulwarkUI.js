@@ -15,15 +15,118 @@ class BulwarkUI {
     };
 
     this.modals = {
+
+      room: function() {
+        return {
+          'html': `
+          <div class="overlay__chat-holder">
+            <div class="title title--room">Room</div>
+            <div class="chat-content chat-content--room"></div>
+            <input type="text" class="chat_input" placeholder="Message"><input type='submit' class="chat_button" value="Chat">
+          </div>
+          <div class="overlay__clients-holder">
+          <div class="title">Players</div>
+            <div class="clients-content clients-list"></div>
+            <input type='submit' class="room_start_button" value="Start">
+            <input type='submit' class="room_leave_button" value="">
+          </div>
+            </div>`,
+          'binds':
+          function(modal) {
+            const room_leave_button = modal.querySelectorAll("input.room_leave_button[type=submit]")[0];
+            const room_start_button = modal.querySelectorAll("input.room_start_button[type=submit]")[0];
+            const chat_input = modal.querySelectorAll("input.chat_input[type=text]")[0];
+            const room_title = modal.querySelectorAll(".title--room")[0];
+
+            room_title.innerHTML += `: ${that.settings.bClient.settings.current_client.location}`;
+
+            room_leave_button.addEventListener("click", function() {
+              that.settings.bClient.leaveRoom();
+            });
+
+            room_start_button.addEventListener("click", function() {
+              that.settings.bClient.startGame();
+            });
+
+            const chat_function = function() {
+              let input_value = chat_input.value.trim().substring(0, 100);
+
+              if (input_value.length > 0) {
+                that.playSound('btn-click');
+                that.settings.bPubSub.publish("send-chat-message", {
+                  message: input_value
+                });
+              }
+
+              chat_input.value = "";
+              chat_input.focus();
+            };
+
+            chat_input.addEventListener("keydown", function(event) {
+              if (event.keyCode == 13) {
+                event.preventDefault();
+                chat_function();
+              }
+            });
+          }
+        };
+      },
+
+      create_room: function() {
+        return {
+          'html': `
+              <div class="title">Create room</div>
+              <input type="text" class="create_room_input" placeholder="Room name"><input type='button' class="cancel_room_button" value=""><input type='submit' class="create_room_button" value="Create">
+            </div>`,
+          'binds':
+          function(modal) {
+            const create_room_input = modal.querySelectorAll("input.create_room_input[type=text]")[0];
+            const create_room_button = modal.querySelectorAll("input.create_room_button[type=submit]")[0];
+            const cancel_room_button = modal.querySelectorAll("input.cancel_room_button[type=button]")[0];
+
+            create_room_button.addEventListener("click", function() {
+              let input_value = create_room_input.value.trim().substring(0, 100);
+
+              let data = {
+                room_name: input_value,
+                room_owner: that.settings.bClient.current_client
+              };
+
+              that.createRoom(data);
+            });
+
+            cancel_room_button.addEventListener("click", function() {
+              that.showLobby();
+            });
+
+            create_room_input.addEventListener("keydown", function(event) {
+
+              let input_value = create_room_input.value.trim().substring(0, 100);
+
+              let data = {
+                room_name: input_value,
+                room_owner: that.settings.bClient.current_client
+              };
+
+              if (event.keyCode == 13) {
+                event.preventDefault();
+                that.createRoom(data);
+              }
+            });
+          }
+        };
+      },
+
       main_lobby: function() {
         return {
           'html':
             `<div class="overlay__rooms-holder">
             <div class="title">Rooms</div>
-            <div class="rooms-content"></div>
-            <input type='button' class="button create_room_button" value="Create room">
+            <div class="rooms-content rooms-list"></div>
+            <input type='button' class="button show_create_room_button" value="Create room">
             </div>
             <div class="overlay__chat-holder">
+              <div class="bulwark-logo"></div>
               <div class="chat-content"></div>
               <input type="text" class="chat_input" placeholder="Message"><input type='submit' class="chat_button" value="Chat">
             </div>
@@ -35,6 +138,7 @@ class BulwarkUI {
           function(modal) {
             const chat_input = modal.querySelectorAll("input.chat_input[type=text]")[0];
             const chat_button = modal.querySelectorAll("input.chat_button[type=submit]")[0];
+            const show_create_room_button = modal.querySelectorAll("input.show_create_room_button[type=button]")[0];
 
             const chat_function = function() {
               let input_value = chat_input.value.trim().substring(0, 100);
@@ -53,11 +157,16 @@ class BulwarkUI {
             chat_button.addEventListener("click", function() {
               chat_function();
             });
+
             chat_input.addEventListener("keydown", function(event) {
               if (event.keyCode == 13) {
                 event.preventDefault();
                 chat_function();
               }
+            });
+
+            show_create_room_button.addEventListener("click", function() {
+              that.showCreateRoom();
             });
           }
         };
@@ -74,14 +183,14 @@ class BulwarkUI {
 
             submit_button.addEventListener("click", function() {
               that.settings.bPubSub.publish("signin", {
-                nickname: signin_nickname.value
+                nickname: signin_nickname.value.trim().substring(0, 50)
               });
             });
 
             signin_nickname.addEventListener("keydown", function(event) {
               if (event.keyCode == 13) {
                 event.preventDefault();
-                that.playSound('btn-submit');
+                that.playSound('btn-click');
                 that.settings.bPubSub.publish("signin", {
                   nickname: signin_nickname.value
                 });
@@ -124,11 +233,30 @@ class BulwarkUI {
     return {
       settings:       this.settings,
       createModal:    this.createModal.bind(this),
+      showLobby:      this.showLobby.bind(this),
+      showRoom:       this.showRoom.bind(this),
       playSound:      this.playSound.bind(this),
       removeModal:    this.removeModal.bind(this),
       addChatMessage: this.addChatMessage.bind(this),
       init:           this.init.bind(this)
     }
+  }
+
+  showRoom(data) {
+    this.removeModal('main_lobby');
+    this.removeModal('create_room');
+    console.log(data);
+    this.createModal('room');
+    this.settings.bClient.refreshClients();
+  }
+
+  showCreateRoom() {
+    this.removeModal('main_lobby');
+    this.createModal('create_room');
+  }
+
+  createRoom(data) {
+    this.settings.bClient.createRoom(data);
   }
 
   addChatMessage(data, style = "client-message") {
@@ -213,8 +341,8 @@ class BulwarkUI {
 
     modal.style.animation = "scale_up_choppy 500ms linear";
 
-    this.bindSFXUI('mouseover', 'btn-mouseover', '[type=submit], .button', modal);
-    this.bindSFXUI('click', 'btn-click', '.button', modal);
+    this.bindSFXUI('mouseover', 'btn-mouseover', '[type=submit], [type=button], .button', modal);
+    this.bindSFXUI('click', 'btn-click', '.button, [type=button]', modal);
     this.bindSFXUI('click', 'btn-click', '[type=submit]', modal);
   }
 
@@ -230,6 +358,15 @@ class BulwarkUI {
 
       this.open_modals[modal_index] = null;
     }
+  }
+
+  showLobby() {
+    this.settings.bUI.removeModal("signin");
+    this.settings.bUI.removeModal("room");
+    this.settings.bUI.removeModal("create_room");
+    this.settings.bUI.createModal('main_lobby');
+    this.settings.bClient.refreshClients();
+    this.settings.bClient.refreshRooms();
   }
 
   genID() {

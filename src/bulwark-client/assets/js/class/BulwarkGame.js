@@ -6,6 +6,7 @@ class BulwarkGame {
     return {
       settings:  this.settings,
       init:      this.init,
+      initGame:  this.initGame.bind(this),
       gameLoop:  this.gameLoop,
       logicLoop: this.logicLoop,
       addCircle: this.addCircle
@@ -98,8 +99,82 @@ class BulwarkGame {
       bRender.init([480, 270], canvas_holder, bPubSub);
     });
 
+    //Rooms
+    bPubSub.subscribe("create-room-done", function(data) {
+      if (data) {
+        data.message = `${data.room_owner.nickname} hosted a room with name "${data.room_name}"`;
+        bUI.addChatMessage(data, 'server-message');
+
+        bClient.refreshRooms();
+      }
+    });
+
+    bPubSub.subscribe("join-room-done", function(data) {
+      if (data) {
+        bClient.settings.current_client.location = data.room_name;
+        bUI.showRoom(data);
+        data.message = `You joined the room ${bClient.settings.current_client.location}`;
+        bUI.addChatMessage(data, 'server-message-self');
+      }
+    });
+
+    bPubSub.subscribe("leave-room-done", function(data) {
+      bClient.settings.current_client.location = 'main-lobby';
+      bUI.showLobby();
+      bUI.addChatMessage({message: `You joined the room ${bClient.settings.current_client.location}`}, 'server-message-self');
+    });
+
+    bPubSub.subscribe("create-room-self", function(data) {
+      if (data) {
+        if (data.room_owner.id == bClient.settings.current_client.id) {
+          bClient.settings.current_client.location = data.room_name;
+          bUI.showRoom(data);
+          data.message = `You joined the room ${bClient.settings.current_client.location}`;
+          bUI.addChatMessage(data, 'server-message-self');
+        }
+      }
+    });
+
+    bPubSub.subscribe("refresh-rooms-done", function(data) {
+      let clients_count = (Object.keys(data).length);
+
+      let rooms_list_elements = document.getElementsByClassName("rooms-list");
+
+      for (let i = 0; i < rooms_list_elements.length; i++) {
+        const node = rooms_list_elements[i];
+        node.innerHTML = "";
+
+        for (let index in data) {
+          if (data.hasOwnProperty(index)) {
+            const room = data[index];
+            const room_block = document.createElement("div");
+            room_block.setAttribute("data-id", room.id);
+            room_block.innerHTML = `<span>${room.room_name}</span><div>${room.clients}/4</div>`;
+
+            node.addEventListener("click", function(event) {
+              bClient.joinRoom({ id: event.target.getAttribute("data-id") });
+            });
+
+            node.appendChild(room_block);
+          }
+        }
+      }
+    });
+
+    //Game
+    bPubSub.subscribe("start-game", function() {
+      console.log(">>> Starting game!");
+      bGame.initGame();
+      bUI.removeModal("room");
+    });
+
     bUI.init(bRender, bGame, bInput, bClient, bUI, bPubSub);
     bClient.init(canvas_holder, bRender, bGame, bInput, bClient, bUI, bPubSub);
+  }
+
+  initGame() {
+    this.settings.bRender.scene = "game";
+    console.log(this.settings.bRender.scenes);
   }
 
   gameLoop() {
@@ -108,8 +183,10 @@ class BulwarkGame {
     const logic = this.settings.bGame.logicLoop.bind(this.settings.bGame);
     logic(this.settings.bRender, this.settings.bGame, this.settings.bInput, this.settings.bClient);
 
-    const renderIntro = this.settings.bRender.renderLoopIntro;
-    renderIntro(this.settings.bRender, this.settings.bGame, this.settings.bInput, this.settings.bClient);
+    if (this.settings.bRender.scene == "intro") {
+      const renderIntro = this.settings.bRender.renderLoopIntro;
+      renderIntro(this.settings.bRender, this.settings.bGame, this.settings.bInput, this.settings.bClient);
+    }
 
     /*const render = bRender.renderLoopMain.bind(bRender);
     render(this.settings.bRender, this.settings.bGame, this.settings.bInput, this.settings.bClient);*/
@@ -126,7 +203,7 @@ class BulwarkGame {
 
     if (bRender.settings.current_client) {
       bClient.settings.socket.emit('client-update', {
-        id: bClient.settings.current_client.id,
+        id: bClient.settings.current_client.client_id,
         rotation: bClient.settings.current_client.rotation,
         x: bClient.settings.current_client.x,
         y: bClient.settings.current_client.y
