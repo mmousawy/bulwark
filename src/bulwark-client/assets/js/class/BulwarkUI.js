@@ -88,8 +88,7 @@ class BulwarkUI {
               let input_value = create_room_input.value.trim().substring(0, 100);
 
               let data = {
-                room_name: input_value,
-                room_owner: that.settings.bClient.current_client
+                room_name: input_value
               };
 
               that.createRoom(data);
@@ -104,8 +103,7 @@ class BulwarkUI {
               let input_value = create_room_input.value.trim().substring(0, 100);
 
               let data = {
-                room_name: input_value,
-                room_owner: that.settings.bClient.current_client
+                room_name: input_value
               };
 
               if (event.keyCode == 13) {
