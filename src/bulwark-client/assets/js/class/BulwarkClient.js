@@ -67,7 +67,7 @@ class BulwarkClient {
 
       if (!this.settings.current_player) {
         this.settings.bRender.initIntro();
-        //this.settings.bUI.playSound('intro');
+        // this.settings.bUI.playSound('intro');
         this.settings.bUI.createModal('signin');
       }
     });

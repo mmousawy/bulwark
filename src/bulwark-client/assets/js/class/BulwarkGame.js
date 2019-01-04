@@ -183,7 +183,7 @@ class BulwarkGame {
     const logic = this.settings.bGame.logicLoop.bind(this.settings.bGame);
     logic(this.settings.bRender, this.settings.bGame, this.settings.bInput, this.settings.bClient);
 
-    if (this.settings.bRender.scene == "intro") {
+    if (this.settings.bRender.settings.scene == "intro") {
       const renderIntro = this.settings.bRender.renderLoopIntro;
       renderIntro(this.settings.bRender, this.settings.bGame, this.settings.bInput, this.settings.bClient);
     }

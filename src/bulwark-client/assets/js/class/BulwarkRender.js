@@ -1,9 +1,11 @@
 class BulwarkRender {
 
   constructor() {
-    this.settings = {};
+    this.settings = {
+      scene: null
+    };
+    
     this.scenes = {};
-    this.scene = null;
 
     this.intro = {
       stars: [],
@@ -59,7 +61,7 @@ class BulwarkRender {
 
   initIntro() {
     this.scenes.intro = new PIXI.DisplayObjectContainer();
-    this.scene = "intro";
+    this.settings.scene = "intro";
 
     let star_texture = new PIXI.Graphics();
     star_texture.beginFill(0xffffff);
@@ -94,7 +96,7 @@ class BulwarkRender {
       star_sprite.z = 1;
       star_sprite.velocity = {
         x: 0,
-        y: (0.25 + (Math.random() * 0.75)) * .1
+        y: (0.25 + (Math.random() * 0.75)) * .05
       };
 
       star_sprite.position.x = Math.round(Math.random() * this.settings.stage_width);
