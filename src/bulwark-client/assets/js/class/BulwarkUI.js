@@ -33,10 +33,10 @@ class BulwarkUI {
             </div>`,
           'binds':
           function(modal) {
-            const room_leave_button = modal.querySelectorAll("input.room_leave_button[type=submit]")[0];
-            const room_start_button = modal.querySelectorAll("input.room_start_button[type=submit]")[0];
-            const chat_input = modal.querySelectorAll("input.chat_input[type=text]")[0];
-            const room_title = modal.querySelectorAll(".title--room")[0];
+            const room_leave_button = modal.querySelector("input.room_leave_button[type=submit]");
+            const room_start_button = modal.querySelector("input.room_start_button[type=submit]");
+            const chat_input = modal.querySelector("input.chat_input[type=text]");
+            const room_title = modal.querySelector(".title--room");
 
             room_title.innerHTML += `: ${that.settings.bClient.settings.current_client.location}`;
 
@@ -80,9 +80,9 @@ class BulwarkUI {
             </div>`,
           'binds':
           function(modal) {
-            const create_room_input = modal.querySelectorAll("input.create_room_input[type=text]")[0];
-            const create_room_button = modal.querySelectorAll("input.create_room_button[type=submit]")[0];
-            const cancel_room_button = modal.querySelectorAll("input.cancel_room_button[type=button]")[0];
+            const create_room_input = modal.querySelector("input.create_room_input[type=text]");
+            const create_room_button = modal.querySelector("input.create_room_button[type=submit]");
+            const cancel_room_button = modal.querySelector("input.cancel_room_button[type=button]");
 
             create_room_button.addEventListener("click", function() {
               let input_value = create_room_input.value.trim().substring(0, 100);
@@ -136,9 +136,9 @@ class BulwarkUI {
             </div>`,
           'binds':
           function(modal) {
-            const chat_input = modal.querySelectorAll("input.chat_input[type=text]")[0];
-            const chat_button = modal.querySelectorAll("input.chat_button[type=submit]")[0];
-            const show_create_room_button = modal.querySelectorAll("input.show_create_room_button[type=button]")[0];
+            const chat_input = modal.querySelector("input.chat_input[type=text]");
+            const chat_button = modal.querySelector("input.chat_button[type=submit]");
+            const show_create_room_button = modal.querySelector("input.show_create_room_button[type=button]");
 
             const chat_function = function() {
               let input_value = chat_input.value.trim().substring(0, 100);
@@ -178,8 +178,8 @@ class BulwarkUI {
             `<div class='bulwark-logo'></div><p class='clients-count-signin'>Retrieving players list...</p><p>Enter a nickname to start playing</p><input type='text' placeholder='Nickname'><input type='submit' class="login-button" value='Login'>`,
           'binds':
           function(modal) {
-            const submit_button = modal.querySelectorAll("input[type=submit]")[0];
-            const signin_nickname = modal.querySelectorAll("input[type=text]")[0];
+            const submit_button = modal.querySelector("input[type=submit]");
+            const signin_nickname = modal.querySelector("input[type=text]");
 
             submit_button.addEventListener("click", function() {
               that.settings.bPubSub.publish("signin", {
@@ -206,7 +206,7 @@ class BulwarkUI {
             `<div class='icon icon--disconnected'></div><p>Could not reach server...</p><input type='submit' class='centered' value='Try again'>`,
           'binds':
           function(modal) {
-            const submit_button = modal.querySelectorAll("input[type=submit]")[0];
+            const submit_button = modal.querySelector("input[type=submit]")[0];
 
             submit_button.addEventListener("click", function() {
               that.settings.bPubSub.publish("refresh");
@@ -220,7 +220,7 @@ class BulwarkUI {
           'html': `<div class='icon icon--disconnected'></div><p>Disconnected from server</p><input type='submit' class='centered' value='Reconnect'>`,
           'binds':
           function(modal) {
-            const submit_button = modal.querySelectorAll("input[type=submit]")[0];
+            const submit_button = modal.querySelector("input[type=submit]")[0];
 
             submit_button.addEventListener("click", function() {
               that.settings.bPubSub.publish("reconnect");
@@ -245,7 +245,6 @@ class BulwarkUI {
   showRoom(data) {
     this.removeModal('main_lobby');
     this.removeModal('create_room');
-    console.log(data);
     this.createModal('room');
     this.settings.bClient.refreshClients();
   }
