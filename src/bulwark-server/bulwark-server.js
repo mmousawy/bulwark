@@ -90,7 +90,7 @@ io.sockets.on('connection', function(socket) {
 
   // Rooms
   socket.on('create-room', function(data) {
-    if (data.room_name.length > 2 && data.room_name !== 'main-lobby' && !checkKeyValueExists(data.room_name, "room_name", bServer.rooms)) {
+    if (data.room_name.length > 0 && data.room_name !== 'main-lobby' && !checkKeyValueExists(data.room_name, "room_name", bServer.rooms)) {
       data.room_owner = current_client;
 
       let new_room = addRoom(data);
