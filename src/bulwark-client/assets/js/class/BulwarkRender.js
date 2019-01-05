@@ -18,7 +18,7 @@ class BulwarkRender {
       scene:           this.scene,
       init:            this.init.bind(this),
       render:          this.render.bind(this),
-      addClient:       this.addClient.bind(this),
+      createPlayerSprite: this.createPlayerSprite.bind(this),
       renderLoopMain:  this.renderLoopMain.bind(this),
       renderLoopIntro: this.renderLoopIntro.bind(this),
       initIntro:       this.initIntro.bind(this)
@@ -33,6 +33,8 @@ class BulwarkRender {
     this.settings.stage_height = stage_size[1];
 
     this.settings.holder = canvas_holder;
+
+    // PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
 
     //Create the renderer
     this.settings.renderer = PIXI.autoDetectRenderer(this.settings.stage_width, this.settings.stage_height, false, false);
@@ -60,31 +62,28 @@ class BulwarkRender {
   }
 
   initIntro() {
-    this.scenes.intro = new PIXI.DisplayObjectContainer();
+    this.scenes.intro = new PIXI.Container();
     this.settings.scene = "intro";
 
-    let star_texture = new PIXI.Graphics();
-    star_texture.beginFill(0xffffff);
-    star_texture.drawRect(0, 0, 1, 1);
-    star_texture.endFill();
-
-    star_texture = star_texture.generateTexture();
+    let star_texture = PIXI.Texture.WHITE;
 
     for (let star_index = 0; star_index < this.intro.stars_length; star_index++) {
       let star_sprite = new PIXI.Sprite(star_texture);
+
+      star_sprite.scale.x = star_sprite.scale.y = .1 * Math.ceil(Math.random()*2);
 
       let star_red = 150;
       let star_green = 150;
       let star_blue = 150;
 
-      if (Math.random() < 0.5) {
-        star_red += Math.round(Math.random()*100);
+      if (Math.random() < .5) {
+        star_red += Math.round(Math.random()*10);
         star_green = 150;
         star_blue = 150;
       } else {
         star_red = 100;
         star_green = 100;
-        star_blue += Math.round(Math.random()*105);
+        star_blue += Math.round(Math.random()*25);
       }
 
       let star_color = this.rgbToHex(star_red, star_green, star_blue);
@@ -96,14 +95,11 @@ class BulwarkRender {
       star_sprite.z = 1;
       star_sprite.velocity = {
         x: 0,
-        y: (0.25 + (Math.random() * 0.75)) * .05
+        y: (0.25 + (Math.random() * 2)) * .5
       };
 
       star_sprite.position.x = Math.round(Math.random() * this.settings.stage_width);
       star_sprite.position.y = Math.round(Math.random() * this.settings.stage_height);
-
-      star_sprite.scale.x = Math.round(Math.random()*2);
-      star_sprite.scale.y = star_sprite.scale.x;
 
       this.scenes.intro.addChild(star_sprite);
 
@@ -136,8 +132,8 @@ class BulwarkRender {
       let star_sprite = this.intro.stars[star_index];
 
       if (star_sprite) {
-        star_sprite.alpha = 0.25 + (0.5 + (Math.cos(star_sprite.x + star_sprite.y)) * 0.5) * 0.75;
-        star_sprite.position.y -= star_sprite.velocity.y * star_sprite.scale.x;
+        star_sprite.alpha = 0.25 + (0.5 + (Math.cos(star_sprite.x + star_sprite.y * .25)) * 0.5) * 0.75;
+        star_sprite.position.y -= (star_sprite.velocity.y * star_sprite.scale.x * star_sprite.scale.x) * 5;
 
         if (star_sprite.position.x < 0) {
           star_sprite.position.x = this.settings.stage_width;
@@ -155,19 +151,14 @@ class BulwarkRender {
   renderLoopMain(bRender, bGame, bInput, bClient) {
     if (bClient.settings.clients) {
       for (let client of bClient.settings.clients) {
-        if (client.client_id == bClient.settings.current_client.client_id) {
-          if (bRender.settings.current_client) {
-            bClient.settings.current_client.rotation = bInput.mouseAngleFromPoint( { x: bRender.settings.current_client.x, y: bRender.settings.current_client.y } );
-            client.sprite.rotation = bClient.settings.current_client.rotation;
-          }
-        } else {
+        if (client.client_id !== bClient.settings.current_client.client_id) {
           client.sprite.rotation = client.rotation;
         }
       }
     }
   }
 
-  addClient(data, bRender, is_self) {
+  createPlayerSprite(data, bRender, is_self) {
     console.log('Add client');
     let client_graphics = new PIXI.Graphics();
 
@@ -179,12 +170,15 @@ class BulwarkRender {
     client_graphics.drawCircle(5, 0, 2);
     client_graphics.endFill();
 
-    const client = new PIXI.Sprite(client_graphics.generateTexture());
-    client.anchor.x = 0.5;
+    // const client = new PIXI.Sprite(this.settings.renderer.generateTexture(client_graphics));
+    const client = new PIXI.Sprite.from('assets/img/arrow-right.png');
+    client.anchor.x = 0.37;
     client.anchor.y = 0.5;
 
-    client.x = bRender.settings.stage_width * 0.5;
-    client.y = bRender.settings.stage_height * 0.5;
+    client.tint = data.tint || 0xFFFFFF;
+
+    client.x = data.position.x || bRender.settings.stage_width * Math.random();
+    client.y = data.position.y || bRender.settings.stage_height * Math.random() * .5;
 
     bRender.settings.stage.addChild(client);
 

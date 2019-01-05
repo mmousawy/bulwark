@@ -6,6 +6,7 @@ class BulwarkGame {
     return {
       settings:  this.settings,
       init:      this.init,
+      current_client: this.current_client,
       initGame:  this.initGame.bind(this),
       gameLoop:  this.gameLoop,
       logicLoop: this.logicLoop,
@@ -162,23 +163,40 @@ class BulwarkGame {
     });
 
     //Game
-    bPubSub.subscribe("start-game", function() {
+    bPubSub.subscribe("start-game", () => {
       console.log(">>> Starting game!");
+
+      const client_data = {
+        client_id: this.settings.bClient.settings.current_client.id,
+        tint: Math.random() * 0xFFFFFF,
+        position: {
+          x: this.settings.bRender.settings.stage_width * Math.random(),
+          y: this.settings.bRender.settings.stage_height * Math.random() * .4
+        },
+        velocity: {
+          x: 0,
+          y: 0
+        },
+        rotation: 0
+      };
+
+      this.settings.bClient.settings.socket.emit('spawn', client_data);
+
       bGame.initGame();
       bUI.removeModal("room");
+      bUI.hide();
     });
-
+    
     bUI.init(bRender, bGame, bInput, bClient, bUI, bPubSub);
     bClient.init(canvas_holder, bRender, bGame, bInput, bClient, bUI, bPubSub);
   }
 
   initGame() {
     this.settings.bRender.scene = "game";
-    console.log(this.settings.bRender.scenes);
   }
 
   gameLoop() {
-    window.requestAnimationFrame(this.settings.bGame.gameLoop.bind(this));
+    window.requestAnimationFrame(this.gameLoop.bind(this));
 
     const logic = this.settings.bGame.logicLoop.bind(this.settings.bGame);
     logic(this.settings.bRender, this.settings.bGame, this.settings.bInput, this.settings.bClient);
@@ -188,8 +206,8 @@ class BulwarkGame {
       renderIntro(this.settings.bRender, this.settings.bGame, this.settings.bInput, this.settings.bClient);
     }
 
-    /*const render = bRender.renderLoopMain.bind(bRender);
-    render(this.settings.bRender, this.settings.bGame, this.settings.bInput, this.settings.bClient);*/
+    const render = bRender.renderLoopMain.bind(bRender);
+    render(this.settings.bRender, this.settings.bGame, this.settings.bInput, this.settings.bClient);
 
     const input = this.settings.bInput.inputLoop.bind(this.settings.bInput);
     input(this.settings.bRender, this.settings.bGame, this.settings.bInput, this.settings.bClient);
@@ -199,22 +217,28 @@ class BulwarkGame {
 
   logicLoop(bRender, bGame, bInput, bClient) {
 
-    //bClient.settings.current_client.rotation = bInput.mouseAngleFromPoint(bClient.settings.current_client.position);
-
     if (bRender.settings.current_client) {
-      bClient.settings.socket.emit('client-update', {
-        id: bClient.settings.current_client.client_id,
-        rotation: bClient.settings.current_client.rotation,
-        x: bClient.settings.current_client.x,
-        y: bClient.settings.current_client.y
-      });
+
+      const newRotation = bInput.mouseAngleFromPoint(bRender.settings.current_client.position);
+
+      if (newRotation > (bRender.settings.current_client.rotation + .025)
+          || newRotation < (bRender.settings.current_client.rotation - .025)) {
+        bRender.settings.current_client.rotation = newRotation;
+
+        bClient.settings.socket.emit('client-update', {
+          client_id: bClient.settings.current_client.client_id,
+          rotation: bRender.settings.current_client.rotation,
+          x: bRender.settings.current_client.x,
+          y: bRender.settings.current_client.y
+        });
+      }
     }
   }
 
   addCircle(data, bRender) {
     console.log('Add circle');
     bRender.settings.graphics.beginFill(0xA08080);
-    bRender.settings.graphics.drawCircle(data.x, data.y, 10);
+    bRender.settings.graphics.drawCircle(data.x, data.y, 4);
     bRender.settings.graphics.endFill();
   }
 }

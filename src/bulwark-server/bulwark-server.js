@@ -32,10 +32,22 @@ io.sockets.on('connection', function(socket) {
 
   socket.on('chat-message', function(data) {
     if (current_client.previous_message !== data.message) {
-      console.log("Chat message received", data, "--> "+current_client.location);
+      console.log("Chat message received", data, "--> " + current_client.location);
       io.sockets.in(current_client.location).emit('new-chat-message', data);
       current_client.previous_message = data.message;
     }
+  });
+
+  // Listen to self-spawn event
+  socket.on('spawn', function(data) {
+    socket.emit('self-spawn', data);
+    socket.broadcast.to(current_client.location).emit('client-spawn', data);
+  });
+
+  // Listen to client-despawn event
+  socket.on('client-despawn', function(data) {
+    socket.emit('self-despawn', data);
+    socket.broadcast.to(current_client.location).emit('client-despawn', data);
   });
 
   // Listen to signin event
@@ -64,7 +76,7 @@ io.sockets.on('connection', function(socket) {
   // Listen to client update event
   socket.on('client-update', function(data) {
     // Log a message with the position
-    socket.broadcast.to(current_client.location).emit('client-update', data);
+    socket.broadcast.emit('client-update', data);
   });
 
   // Listen to client update event
@@ -219,8 +231,6 @@ function newClient() {
     id: genID(),
     location: "main-lobby"
   }
-
-  console.log(`Client connected with id ${client.id}`);
 
   return client;
 }

@@ -41,7 +41,7 @@ class BulwarkClient {
   connect() {
     console.log("Initializing socket");
     this.settings.socket = io('http://127.0.0.1:3000/', { 'force new connection': true });
-    this.settings.clients = null;
+    this.settings.clients = [];
     this.settings.clients_ids = [];
     this.settings.current_client = null;
 
@@ -114,8 +114,23 @@ class BulwarkClient {
       callback(data);
     });
 
-    this.settings.socket.on('self-join', (data) => {
-      const callback = this.handleSelfJoin.bind(this);
+    this.settings.socket.on('self-spawn', (data) => {
+      const callback = this.handleSelfSpawn.bind(this);
+      callback(data);
+    });
+
+    this.settings.socket.on('self-despawn', (data) => {
+      const callback = this.handleSelfDeSpawn.bind(this);
+      callback(data);
+    });
+
+    this.settings.socket.on('client-spawn', (data) => {
+      const callback = this.handleClientSpawn.bind(this);
+      callback(data);
+    });
+
+    this.settings.socket.on('client-despawn', (data) => {
+      const callback = this.handleClientDeSpawn.bind(this);
       callback(data);
     });
 
@@ -163,20 +178,31 @@ class BulwarkClient {
   handleClientJoin(data) {
     data.message = `${data.nickname} joined the room`;
     this.settings.bUI.addChatMessage(data, 'server-message');
-    //const client_sprite = bRender.addClient(data, bRender);
-    //this.addClient(data, client_sprite);
   }
 
   handleClientLeave(data) {
     data.message = `${data.nickname} left the room`;
     this.settings.bUI.addChatMessage(data, 'server-message');
-    //const client_sprite = bRender.addClient(data, bRender);
-    //this.addClient(data, client_sprite);
   }
 
-  handleSelfJoin(data) {
-    const client_sprite = bRender.addClient(data, bRender, true);
+  handleSelfSpawn(data) {
+    const client_sprite = bRender.createPlayerSprite(data, bRender, true);
     this.addClient(data, client_sprite, true);
+  }
+
+  handleSelfDeSpawn(data) {
+    data.message = `You left the game`;
+    this.settings.bUI.addChatMessage(data, 'server-message-self');
+  }
+
+  handleClientSpawn(data) {
+    const client_sprite = bRender.createPlayerSprite(data, bRender);
+    this.addClient(data, client_sprite);
+  }
+
+  handleClientDeSpawn(data) {
+    data.message = `${data.nickname} left the game`;
+    this.settings.bUI.addChatMessage(data, 'server-message');
   }
 
   handleClientSignin(data) {
@@ -220,14 +246,11 @@ class BulwarkClient {
   addClient(data = null, client_sprite, is_self) {
     if (data) {
       data.sprite = client_sprite;
-      data.rotation = 0;
-      data.x = 0;
-      data.y = 0;
 
       const clients_size = this.settings.clients.push(data);
       this.settings.clients_ids[data.client_id] = this.settings.clients[clients_size-1];
 
-      console.log(data.client_id, this.settings.clients_ids[data.client_id]);
+      console.log(data);
 
       if (is_self) {
         this.settings.current_client = data;

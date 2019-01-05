@@ -173,7 +173,7 @@ class BulwarkUI {
       signin: function() {
         return {
           'html':
-            `<div class='bulwark-logo'></div><p class='clients-count-signin'>Retrieving players list...</p><p>Enter a nickname to start playing</p><input type='text' placeholder='Nickname'><input type='submit' class="login-button" value='Login'>`,
+            `<div class='bulwark-logo'></div><p class='clients-count-signin'>Retrieving players list...</p><p>Enter a nickname to start playing</p><input type='text' placeholder='Nickname'><input type='submit' class="login-button" value='Log in'>`,
           'binds':
           function(modal) {
             const submit_button = modal.querySelector("input[type=submit]");
@@ -236,7 +236,8 @@ class BulwarkUI {
       playSound:      this.playSound.bind(this),
       removeModal:    this.removeModal.bind(this),
       addChatMessage: this.addChatMessage.bind(this),
-      init:           this.init.bind(this)
+      init:           this.init.bind(this),
+      hide:           this.hide.bind(this)
     }
   }
 
@@ -250,6 +251,10 @@ class BulwarkUI {
   showCreateRoom() {
     this.removeModal('main_lobby');
     this.createModal('create_room');
+  }
+
+  hide() {
+    this.modal_overlay.classList.add('is-hidden');
   }
 
   createRoom(data) {
@@ -336,7 +341,7 @@ class BulwarkUI {
     this.modal_holder.style.width = modal.offsetWidth + "px";
     this.modal_holder.style.height = modal.offsetHeight + "px";
 
-    modal.style.animation = "scale_up_choppy 500ms linear";
+    modal.style.animation = "scale_up_choppy 400ms linear";
 
     this.bindSFXUI('mouseover', 'btn-mouseover', '[type=submit], [type=button], .button', modal);
     this.bindSFXUI('click', 'btn-click', '.button, [type=button]', modal);
