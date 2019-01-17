@@ -218,16 +218,16 @@ class BulwarkGame {
   logicLoop(bRender, bGame, bInput, bClient) {
 
     if (bRender.settings.current_client) {
+      const newRotation = bInput.mouseAngleFromPoint({x: bRender.settings.current_client.position.x + bRender.settings.current_client.gun.position.x,
+        y: bRender.settings.current_client.position.y + bRender.settings.current_client.gun.position.y});
 
-      const newRotation = bInput.mouseAngleFromPoint(bRender.settings.current_client.position);
-
-      if (newRotation > (bRender.settings.current_client.rotation + .025)
-          || newRotation < (bRender.settings.current_client.rotation - .025)) {
-        bRender.settings.current_client.rotation = newRotation;
+      if (newRotation > (bRender.settings.current_client.gun.rotation + .025)
+          || newRotation < (bRender.settings.current_client.gun.rotation - .025)) {
+        bRender.settings.current_client.gun.rotation = newRotation;
 
         bClient.settings.socket.emit('client-update', {
           client_id: bClient.settings.current_client.client_id,
-          rotation: bRender.settings.current_client.rotation,
+          rotation: bRender.settings.current_client.gun.rotation,
           x: bRender.settings.current_client.x,
           y: bRender.settings.current_client.y
         });

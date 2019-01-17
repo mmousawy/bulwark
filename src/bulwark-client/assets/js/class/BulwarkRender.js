@@ -116,6 +116,17 @@ class BulwarkRender {
     this.scenes.intro.addChild(background);
 
     this.settings.stage.addChild(this.scenes.intro);
+
+    // Player sprite testing
+    // const data = {
+    //   client_id: "5qu1",
+    //   position: {x: 100, y: 214},
+    // };
+
+    // const client_sprite = bRender.createPlayerSprite(data, bRender, true);
+    // bClient.addClient(data, client_sprite, true);
+
+    // bUI.hide();
   }
 
   componentToHex(c) {
@@ -152,7 +163,7 @@ class BulwarkRender {
     if (bClient.settings.clients) {
       for (let client of bClient.settings.clients) {
         if (client.client_id !== bClient.settings.current_client.client_id) {
-          client.sprite.rotation = client.rotation;
+          client.sprite.gun.rotation = client.rotation;
         }
       }
     }
@@ -171,14 +182,24 @@ class BulwarkRender {
     client_graphics.endFill();
 
     // const client = new PIXI.Sprite(this.settings.renderer.generateTexture(client_graphics));
-    const client = new PIXI.Sprite.from('assets/img/arrow-right.png');
-    client.anchor.x = 0.37;
-    client.anchor.y = 0.5;
+    const client = new PIXI.Container();
 
-    client.tint = data.tint || 0xFFFFFF;
+    const base = new PIXI.Sprite.from('assets/img/cannon-01-base.png');
+    const gun = new PIXI.Sprite.from('assets/img/cannon-01-gun.png');
+
+    gun.position.x = 52;
+    gun.position.y = 3;
+
+    client.addChild(base);
+    client.addChild(gun);
+
+    client.gun = gun;
+
+    gun.anchor.x = 0.175;
+    gun.anchor.y = 0.5;
 
     client.x = data.position.x || bRender.settings.stage_width * Math.random();
-    client.y = data.position.y || bRender.settings.stage_height * Math.random() * .5;
+    client.y = 214;
 
     bRender.settings.stage.addChild(client);
 

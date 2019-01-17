@@ -27,7 +27,6 @@ class BulwarkInput {
   }
 
   updateMouse(mouseEvent) {
-    console.log(mouseEvent);
     this.INPUT.mouse.x = Math.round( ( mouseEvent.clientX - this.settings.holder.offsetLeft ) * .5 );
     this.INPUT.mouse.y = Math.round( ( mouseEvent.clientY - this.settings.holder.offsetTop ) * .5 );
   }

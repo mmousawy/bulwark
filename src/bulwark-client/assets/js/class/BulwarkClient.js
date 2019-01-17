@@ -11,6 +11,7 @@ class BulwarkClient {
       createRoom: this.createRoom.bind(this),
       joinRoom: this.joinRoom.bind(this),
       leaveRoom: this.leaveRoom.bind(this),
+      addClient: this.addClient.bind(this),
       
       startGame: this.startGame.bind(this),
       signin: this.signin.bind(this),
@@ -162,7 +163,6 @@ class BulwarkClient {
     this.settings.socket.on('start-game', () => {
       this.settings.bPubSub.publish("start-game");
     });
-
   }
 
   refreshClients() {
