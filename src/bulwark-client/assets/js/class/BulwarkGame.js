@@ -91,13 +91,26 @@ class BulwarkGame {
     });
 
     bPubSub.subscribe("bRender-ready", function() {
-      bInput.init(canvas_holder, bClient);
+      bInput.init(canvas_holder, bGame, bClient);
       bGame.gameLoop(bRender, bGame, bInput, bClient, bUI);
-      bClient.listen();
     });
 
     bPubSub.subscribe("bClient-ready", function() {
-      bRender.init([480, 270], canvas_holder, bPubSub);
+      bClient.listen();
+      bRender.init([480, 360], canvas_holder, bPubSub);
+
+      // setTimeout(() => {
+      //   bClient.settings.current_client = {
+      //     id: Math.random() * 1000
+      //   };
+      //   bClient.createRoom({
+      //     room_name: 'debug'
+      //   });
+
+      //   bClient.joinRoom({room_name: 'debug'});
+
+      //   bPubSub.publish("start-game");
+      // }, 200);
     });
 
     //Rooms
@@ -170,7 +183,7 @@ class BulwarkGame {
         client_id: this.settings.bClient.settings.current_client.id,
         tint: Math.random() * 0xFFFFFF,
         position: {
-          x: this.settings.bRender.settings.stage_width * Math.random(),
+          x: -32 + this.settings.bRender.settings.stage_width / (1 + 1), // divide by 1 + players in room
           y: this.settings.bRender.settings.stage_height * Math.random() * .4
         },
         velocity: {
@@ -186,7 +199,7 @@ class BulwarkGame {
       bUI.removeModal("room");
       bUI.hide();
     });
-    
+
     bUI.init(bRender, bGame, bInput, bClient, bUI, bPubSub);
     bClient.init(canvas_holder, bRender, bGame, bInput, bClient, bUI, bPubSub);
   }
@@ -218,11 +231,13 @@ class BulwarkGame {
   logicLoop(bRender, bGame, bInput, bClient) {
 
     if (bRender.settings.current_client) {
-      const newRotation = bInput.mouseAngleFromPoint({x: bRender.settings.current_client.position.x + bRender.settings.current_client.gun.position.x,
-        y: bRender.settings.current_client.position.y + bRender.settings.current_client.gun.position.y});
+      const newRotation = bInput.mouseAngleFromPoint({
+        x: bRender.settings.current_client.position.x + bRender.settings.current_client.gun.position.x * .5,
+        y: bRender.settings.current_client.position.y + bRender.settings.current_client.gun.position.y * .5
+      });
 
-      if (newRotation > (bRender.settings.current_client.gun.rotation + .025)
-          || newRotation < (bRender.settings.current_client.gun.rotation - .025)) {
+      // if (newRotation > (bRender.settings.current_client.gun.rotation + .025)
+      //     || newRotation < (bRender.settings.current_client.gun.rotation - .025)) {
         bRender.settings.current_client.gun.rotation = newRotation;
 
         bClient.settings.socket.emit('client-update', {
@@ -231,14 +246,197 @@ class BulwarkGame {
           x: bRender.settings.current_client.x,
           y: bRender.settings.current_client.y
         });
-      }
+      // }
     }
   }
 
   addCircle(data, bRender) {
-    console.log('Add circle');
-    bRender.settings.graphics.beginFill(0xA08080);
-    bRender.settings.graphics.drawCircle(data.x, data.y, 4);
-    bRender.settings.graphics.endFill();
+    let client;
+
+    if (this.settings.bClient.settings.clients_ids[data.client_id]) {
+      client = this.settings.bClient.settings.clients_ids[data.client_id];
+    } else {
+      return false;
+    }
+
+    const pointData = {
+      x: client.sprite.position.x + client.sprite.gun.position.x * .5,
+      y: client.sprite.position.y + client.sprite.gun.position.y * .5
+    };
+
+    client.sprite.gun.velocity.x -= 5 * Math.cos(client.sprite.gun.rotation);
+    client.sprite.gun.velocity.y -= 5 * Math.sin(client.sprite.gun.rotation);
+
+    const beam_container = new PIXI.Container();
+    beam_container.rotation = client.sprite.gun.rotation;
+    beam_container.position.x = pointData.x;
+    beam_container.position.y = pointData.y;
+
+    const dm_point = {
+      dx: data.x - pointData.x,
+      dy: data.y - pointData.y
+    };
+
+    const distance = Math.sqrt(dm_point.dx * dm_point.dx + dm_point.dy * dm_point.dy) - 36;
+
+    const beam_mask = new PIXI.Sprite.from(bRender.sprites.energy_beam_mask.texture);
+    beam_mask.anchor.y = .5;
+    beam_mask.position.x = 0;
+    beam_mask.scale.x = 2;
+    beam_mask.scale.y = .75;
+
+    const beam = new PIXI.extras.TilingSprite.from(bRender.sprites.energy_beam.texture, distance, 32);
+    beam.mask = beam_mask;
+    beam.anchor.y = .5;
+    beam.position.x = 30;
+    beam.tileTransform.position.x = Math.round(Math.random() * 32);
+
+    const muzzle_flash = new PIXI.Sprite.from(bRender.sprites.muzzle_flash.texture);
+    muzzle_flash.rotation = client.sprite.gun.rotation;
+    muzzle_flash.position.x = pointData.x + 32 * Math.cos(client.sprite.gun.rotation);
+    muzzle_flash.position.y = pointData.y + 32 * Math.sin(client.sprite.gun.rotation);;;
+    muzzle_flash.anchor.x = 0;
+    muzzle_flash.anchor.y = .5;
+    muzzle_flash.scale.x = Math.random() * .5 + .5;
+    muzzle_flash.scale.y = muzzle_flash.scale.x;
+
+    if (Math.random() < .5) {
+      muzzle_flash.scale.y *= -1;
+    }
+
+    muzzle_flash.ttl = 2;
+    muzzle_flash.blendMode = PIXI.BLEND_MODES.SCREEN;
+    bRender.settings.particles.addChild(muzzle_flash);
+
+    beam_container.addChild(beam_mask);
+    beam_container.addChild(beam);
+    beam_container.blendMode = PIXI.BLEND_MODES.SCREEN;
+
+    const beam_impact_reverse_texture = bRender.sprites.energy_beam_impact_reverse.texture;
+
+    beam_container.ttl = 10;
+    bRender.settings.particles.addChild(beam_container);
+    beam_container.distance = distance;
+    beam_container.translateRate = beam_container.distance / beam_container.ttl;
+
+    const beam_impact = new PIXI.Sprite.from(bRender.sprites.energy_beam_impact.texture);
+    beam_impact.scale.x = 0;
+    beam_impact.scale.y = 0;
+    beam_impact.visible = false;
+    beam_impact.maxScale = .5;
+    beam_impact.position.x = data.x
+    beam_impact.position.y = data.y;
+    beam_impact.blendMode = PIXI.BLEND_MODES.SCREEN;
+    beam_impact.anchor.x = .5;
+    beam_impact.anchor.y = .5;
+    beam_impact.animationDuration = 20;
+    beam_impact.maxTtl = beam_container.ttl + beam_impact.animationDuration;
+    beam_impact.ttl = beam_impact.maxTtl;
+    beam_impact.rotation = Math.random() * Math.PI;
+    beam_impact.scaleRate = beam_impact.maxScale / 10;
+    bRender.settings.particles.addChild(beam_impact);
+
+    const beam_impact_sparks = [];
+
+    // Impact sparks
+    for (let i = 0; i < 20; i++) {
+      const spark = new PIXI.Sprite.from(bRender.sprites[`spark${Math.round(Math.random() * 2) + 1}`].texture);
+      spark.blendMode = PIXI.BLEND_MODES.SCREEN;
+      spark.position.x = data.x;
+      spark.position.y = data.y;
+      spark.anchor.x = .5;
+      spark.anchor.y = .5;
+      spark.scale.x = Math.random() * .5 + .25;
+      spark.scale.y = spark.scale.x;
+      spark.animationDuration = Math.round(Math.random() * 10 + 10);
+      spark.ttl = beam_container.ttl + spark.animationDuration;
+      spark.visible = false;
+
+      const velocityMultiplier = 15;
+
+      spark.velocity = {
+        x: (Math.random() - Math.random()) * velocityMultiplier,
+        y: (Math.random() - Math.random()) * velocityMultiplier,
+        r: (Math.random() - Math.random()) * velocityMultiplier * .2
+      };
+
+      spark.animate = function() {
+        if (this.ttl == this.animationDuration) {
+          this.visible = true;
+        }
+
+        if (this.ttl < this.animationDuration) {
+          this.position.x += this.velocity.x;
+          this.position.y += this.velocity.y;
+          this.rotation += this.velocity.r;
+          this.opacity -= .5;
+
+          this.velocity.x *= .9;
+          this.velocity.y *= .9;
+        }
+      }
+
+      bRender.settings.particles.addChild(spark);
+      beam_impact_sparks.push(spark);
+    }
+
+    // Beam sparks
+    beam_container.animate = function() {
+      this.children[0].position.x += this.translateRate;
+
+      const spark = new PIXI.Sprite.from(bRender.sprites[`spark${Math.round(Math.random() * 2) + 1}`].texture);
+      spark.blendMode = PIXI.BLEND_MODES.SCREEN;
+      spark.position.x = pointData.x + ((this.children[0].position.x + 60) * Math.cos(this.rotation));
+      spark.position.y = pointData.y + ((this.children[0].position.x + 60) * Math.sin(this.rotation));
+      spark.anchor.x = .5;
+      spark.anchor.y = .5;
+      spark.scale.x = Math.random() * .5 + .25;
+      spark.scale.y = spark.scale.x;
+      spark.ttl = Math.round(Math.random() * 10 + 5);
+
+      const velocityMultiplier = 5;
+
+      spark.velocity = {
+        x: (Math.random() - Math.random()) * 3 + velocityMultiplier * Math.cos(this.rotation),
+        y: (Math.random() - Math.random()) * 3 + velocityMultiplier * Math.sin(this.rotation),
+        r: (Math.random() - Math.random()) * velocityMultiplier * .2
+      };
+
+      spark.animate = function() {
+        this.position.x -= this.velocity.x;
+        this.position.y -= this.velocity.y;
+        this.rotation += this.velocity.r;
+        this.opacity -= .5;
+
+        this.velocity.x *= .95;
+        this.velocity.y *= .95;
+      }
+
+      bRender.settings.particles.addChild(spark);
+      beam_impact_sparks.push(spark);
+    };
+
+    beam_impact.animate = function() {
+      if (this.ttl == this.animationDuration) {
+        beam_impact.visible = true;
+      }
+
+      if (this.ttl < this.animationDuration + 1 && this.ttl > this.animationDuration * .5) {
+        this.scale.x += this.scaleRate;
+        this.scale.y += this.scaleRate;
+        return;
+      }
+
+      if (this.ttl == this.animationDuration * .5) {
+        this.texture = beam_impact_reverse_texture;
+        this.scale.x = this.maxScale + this.maxScale * .2;
+        this.scale.y = this.maxScale + this.maxScale * .2;
+      }
+
+      if (this.ttl < this.animationDuration * .5) {
+        this.scale.x -= this.scaleRate;
+        this.scale.y -= this.scaleRate;
+      }
+    };
   }
 }

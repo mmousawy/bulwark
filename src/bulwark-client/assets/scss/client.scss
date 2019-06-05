@@ -9,16 +9,13 @@
 html, body {
   height: 100%;
   font: 16px 'Fiery_Turk', monospace;
+  background-color: grey;
 }
 
 body {
   display: flex;
-  justify-content: center;
-  align-items: center;
-  background-color: grey;
   font-smooth: never;
   -webkit-font-smoothing: none;
-  overflow: hidden;
 }
 
 body * {
@@ -39,7 +36,8 @@ body * {
 
 .canvas-holder {
   width: 960px;
-  height: 540px;
+  height: 720px;
+  margin: auto;
 }
 
 canvas {

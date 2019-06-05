@@ -12,7 +12,7 @@ class BulwarkClient {
       joinRoom: this.joinRoom.bind(this),
       leaveRoom: this.leaveRoom.bind(this),
       addClient: this.addClient.bind(this),
-      
+
       startGame: this.startGame.bind(this),
       signin: this.signin.bind(this),
       refreshClients: this.refreshClients.bind(this),
@@ -67,7 +67,6 @@ class BulwarkClient {
       console.log("Connected to server");
 
       if (!this.settings.current_player) {
-        this.settings.bRender.initIntro();
         // this.settings.bUI.playSound('intro');
         this.settings.bUI.createModal('signin');
       }

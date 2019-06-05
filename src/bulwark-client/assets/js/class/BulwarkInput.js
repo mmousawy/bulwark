@@ -19,8 +19,9 @@ class BulwarkInput {
     }
   }
 
-  init(canvas_holder, bClient) {
+  init(canvas_holder, bGame, bClient) {
     this.settings.holder = canvas_holder;
+    this.settings.bGame = bGame;
     this.settings.bClient = bClient;
     this.settings.holder.addEventListener('click', this.clickHandler.bind(this));
     this.settings.holder.addEventListener('mousemove', this.moveHandler.bind(this));
@@ -38,7 +39,17 @@ class BulwarkInput {
       dy: this.INPUT.mouse.y - pointData.y
     }
 
-    const mouse_angle = Math.atan2(dm_point.dy, dm_point.dx);
+    let mouse_angle = Math.atan2(dm_point.dy, dm_point.dx);
+
+    if (dm_point.dx < 0) {
+      if (mouse_angle > 0 && mouse_angle < Math.PI - .5) {
+        mouse_angle = Math.PI - .5;
+      }
+    } else {
+      if (mouse_angle > .5) {
+        mouse_angle = .5;
+      }
+    }
 
     if (degrees) {
       return mouse_angle * ( 180 / Math.PI );
@@ -54,10 +65,33 @@ class BulwarkInput {
   clickHandler(mouseEvent) {
     this.updateMouse(mouseEvent);
 
+    if (this.settings.bGame.settings.bRender.scene !== "game") {
+      return;
+    }
+
+    const client = this.settings.bClient.settings.current_client;
+
+    const pointData = {
+      x: client.sprite.position.x + client.sprite.gun.position.x * .5,
+      y: client.sprite.position.y + client.sprite.gun.position.y * .5
+    };
+
+    const dm_point = {
+      dx: this.INPUT.mouse.x - pointData.x,
+      dy: this.INPUT.mouse.y - pointData.y
+    };
+
+    const distance = Math.sqrt(dm_point.dx * dm_point.dx + dm_point.dy * dm_point.dy) - 36;
+
+    if (distance < 10) {
+      return;
+    }
+
     const bClient = this.settings.bClient;
 
     // Emmit cursor position on click
     bClient.settings.socket.emit('client-click', {
+      client_id: client.client_id,
       x: this.INPUT.mouse.x,
       y: this.INPUT.mouse.y }
     );

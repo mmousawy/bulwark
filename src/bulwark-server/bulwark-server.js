@@ -19,7 +19,7 @@ io.sockets.on('connection', function(socket) {
   socket.on('clients-list', function() {
     console.log(`Requesting clients list (${current_client.location})`);
 
-    let clients_list = {};
+    let clients_list = [];
 
     if (current_client.id && current_client.location !== "main-lobby") {
       clients_list = getClientsList(current_client.location);
@@ -40,6 +40,25 @@ io.sockets.on('connection', function(socket) {
 
   // Listen to self-spawn event
   socket.on('spawn', function(data) {
+    const clients_list = getClientsList(current_client.location);
+
+    console.log('>>>', data);
+    console.log('<<<', clients_list);
+
+    console.log('###', current_client);
+
+    const canvasWidth = 480;
+    const clientDistance = canvasWidth / (bServer.rooms[current_client.location].clients + 1);
+
+    debugger;
+    clients_list.forEach((client, index) => {
+      console.log(data.client_id, client.id);
+      if (data.client_id === client.id) {
+        console.log('>>>', index);
+        data.position.x = clientDistance * (index + 1) - 32;
+      }
+    });
+
     socket.emit('self-spawn', data);
     socket.broadcast.to(current_client.location).emit('client-spawn', data);
   });
@@ -68,20 +87,13 @@ io.sockets.on('connection', function(socket) {
   });
 
   socket.on('client-click', function(data) {
-    // Log a message with the position
-    console.log(`A client clicked on the location x: ${data.x}, y: ${data.y}`);
-    io.sockets.emit('client-click', data);
+    // console.log(`A client clicked on the location x: ${data.x}, y: ${data.y}`);
+    io.sockets.to(current_client.location).emit('client-click', data);
+    // io.sockets.emit('client-click', data);
   });
 
   // Listen to client update event
   socket.on('client-update', function(data) {
-    // Log a message with the position
-    socket.broadcast.emit('client-update', data);
-  });
-
-  // Listen to client update event
-  socket.on('client-update', function(data) {
-    // Log a message with the position
     socket.broadcast.to(current_client.location).emit('client-update', data);
   });
 
@@ -102,7 +114,10 @@ io.sockets.on('connection', function(socket) {
 
   // Rooms
   socket.on('create-room', function(data) {
-    if (data.room_name.length > 0 && data.room_name !== 'main-lobby' && !checkKeyValueExists(data.room_name, "room_name", bServer.rooms)) {
+    if (data.room_name.length > 0
+        && data.room_name !== 'main-lobby'
+        && !checkKeyValueExists(data.room_name, "room_name", bServer.rooms)) {
+
       data.room_owner = current_client;
 
       let new_room = addRoom(data);
@@ -115,14 +130,19 @@ io.sockets.on('connection', function(socket) {
       socket.emit('create-room-self', data);
       socket.broadcast.to(current_client.location).emit('rooms-list', bServer.rooms);
 
-      console.log(bServer.rooms);
-
       current_client.location = new_room.id;
+
+      console.log(bServer.rooms);
     }
   });
 
   socket.on('join-room', function(data) {
-    if (data.id && data.id !== current_client.location) {
+    if ((data.id && data.id !== current_client.location) || (data.room_name == 'debug')) {
+
+      if (data.room_name) {
+        data.id = bServer.rooms[Object.keys(bServer.rooms)[0]].id;
+      }
+
       console.log(`${current_client.id} joined the room ${data.id}`);
 
       socket.leave(current_client.location);
@@ -213,13 +233,13 @@ function checkKeyValueExists(needle, key, haystack) {
 }
 
 function getClientsList(location) {
-  let clients_list = {};
+  let clients_list = [];
 
   for (client_index in bServer.clients) {
     let client = bServer.clients[client_index];
 
     if (client.location == location) {
-      clients_list[client.id] = client;
+      clients_list.push(client);
     }
   }
 
