@@ -7,12 +7,18 @@ class BulwarkUI {
     this.open_modals = {};
 
     this.sounds = {
-      'btn-mouseover': new Audio('assets/audio/sfx-btn-hover.wav'),
-      'btn-click': new Audio('assets/audio/sfx-btn-click.wav'),
-      'btn-submit': new Audio('assets/audio/sfx-btn-submit.wav'),
-      'chat-new': new Audio('assets/audio/sfx-chat-new.wav'),
-      'intro': new Audio('assets/audio/music-intro.m4a')
+      'btn-mouseover': new Howl({ src: ['assets/audio/sfx-btn-hover.wav'] }),
+      'btn-click': new Howl({ src: ['assets/audio/sfx-btn-click.wav'] }),
+      'btn-submit': new Howl({ src: ['assets/audio/sfx-btn-submit.wav'] }),
+      'chat-new': new Howl({ src: ['assets/audio/sfx-chat-new.wav'] }),
+      'intro': new Howl({ src: ['assets/audio/music-intro.m4a'] }),
+      'shot1': new Howl({ src: ['assets/audio/sfx-shot1.wav'] }),
+      'new-wave': new Howl({ src: ['assets/audio/sfx-new-wave.wav'] }),
+      'no-impact': new Howl({ src: ['assets/audio/sfx-no-impact.wav'] }),
+      'impact': new Howl({ src: ['assets/audio/sfx-impact.wav'] }),
     };
+
+    this.sounds.shot1.volume(.5);
 
     this.modals = {
 
@@ -88,7 +94,7 @@ class BulwarkUI {
               let input_value = create_room_input.value.trim().substring(0, 100);
 
               let data = {
-                room_name: input_value
+                name: input_value
               };
 
               that.createRoom(data);
@@ -103,7 +109,7 @@ class BulwarkUI {
               let input_value = create_room_input.value.trim().substring(0, 100);
 
               let data = {
-                room_name: input_value
+                name: input_value
               };
 
               if (event.keyCode == 13) {
@@ -173,7 +179,7 @@ class BulwarkUI {
       signin: function() {
         return {
           'html':
-            `<div class='bulwark-logo'></div><p class='clients-count-signin'>Retrieving players list...</p><p>Enter a nickname to start playing</p><input type='text' placeholder='Nickname'><input type='submit' class="login-button" value='Log in'>`,
+            `<div class='bulwark-logo'></div><p class='clients-count-signin'>Retrieving players list...</p><p>Enter a nickname to start playing</p><input type='text' placeholder='Nickname'><input type='submit' class="login-button" value='Enter'>`,
           'binds':
           function(modal) {
             const submit_button = modal.querySelector("input[type=submit]");
@@ -204,7 +210,7 @@ class BulwarkUI {
             `<div class='icon icon--disconnected'></div><p>Could not reach server...</p><input type='submit' class='centered' value='Try again'>`,
           'binds':
           function(modal) {
-            const submit_button = modal.querySelector("input[type=submit]")[0];
+            const submit_button = modal.querySelector("input[type='submit']");
 
             submit_button.addEventListener("click", function() {
               that.settings.bPubSub.publish("refresh");
@@ -218,7 +224,7 @@ class BulwarkUI {
           'html': `<div class='icon icon--disconnected'></div><p>Disconnected from server</p><input type='submit' class='centered' value='Reconnect'>`,
           'binds':
           function(modal) {
-            const submit_button = modal.querySelector("input[type=submit]")[0];
+            const submit_button = modal.querySelector("input[type=submit]");
 
             submit_button.addEventListener("click", function() {
               that.settings.bPubSub.publish("reconnect");
@@ -230,6 +236,7 @@ class BulwarkUI {
 
     return {
       settings:       this.settings,
+      sounds:         this.sounds,
       createModal:    this.createModal.bind(this),
       showLobby:      this.showLobby.bind(this),
       showRoom:       this.showRoom.bind(this),
@@ -281,7 +288,7 @@ class BulwarkUI {
   }
 
   playSound(sfx_index) {
-    this.sounds[sfx_index].play();
+    return this.sounds[sfx_index].play();
   }
 
   bindSFXUI(event_listener, sfx_index, selector, container = document.body) {

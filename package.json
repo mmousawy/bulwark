@@ -8,15 +8,16 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/doubtingreality/turbo-bulwark.git"
+    "url": "git+https://github.com/mmousawy/bulwark.git"
   },
   "author": "Murtada al Mousawy and Kaleigh Hunter",
   "license": "AGPL-3.0",
   "bugs": {
-    "url": "https://github.com/doubtingreality/turbo-bulwark/issues"
+    "url": "https://github.com/mmousawy/bulwark/issues"
   },
-  "homepage": "https://github.com/doubtingreality/turbo-bulwark#readme",
+  "homepage": "https://github.com/mmousawy/bulwark#readme",
   "dependencies": {
+    "nanoid": "^2.0.3",
     "pixi.js": "^4.0.3",
     "socket.io": "^1.4.8",
     "socket.io-client": "^1.4.8",

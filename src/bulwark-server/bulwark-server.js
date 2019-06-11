@@ -1,12 +1,10 @@
-const bServer = {
-  clients: {},
-  rooms: {}
-};
+const nanoid = require('nanoid');
+const Room = require('./Room');
+const bServer = require('./Server');
+const io = require('./Socket').io;
+const server = require('./Socket').server;
 
 console.log('>>> Starting server...');
-
-const server = require('http').createServer();
-const io = require('socket.io')(server);
 
 console.log('[1/2] Server and socket.io module loaded');
 
@@ -21,7 +19,7 @@ io.sockets.on('connection', function(socket) {
 
     let clients_list = [];
 
-    if (current_client.id && current_client.location !== "main-lobby") {
+    if (current_client.id && current_client.location !== 'main-lobby') {
       clients_list = getClientsList(current_client.location);
     } else {
       clients_list = bServer.clients;
@@ -42,19 +40,11 @@ io.sockets.on('connection', function(socket) {
   socket.on('spawn', function(data) {
     const clients_list = getClientsList(current_client.location);
 
-    console.log('>>>', data);
-    console.log('<<<', clients_list);
-
-    console.log('###', current_client);
-
-    const canvasWidth = 480;
+    const canvasWidth = bServer.settings.width;
     const clientDistance = canvasWidth / (bServer.rooms[current_client.location].clients + 1);
 
-    debugger;
     clients_list.forEach((client, index) => {
-      console.log(data.client_id, client.id);
-      if (data.client_id === client.id) {
-        console.log('>>>', index);
+      if (data.id === client.id) {
         data.position.x = clientDistance * (index + 1) - 32;
       }
     });
@@ -80,7 +70,7 @@ io.sockets.on('connection', function(socket) {
       socket.broadcast.to(current_client.location).emit('client-signin', data);
       socket.join('main-lobby');
       socket.emit('self-signin', current_client);
-      socket.emit('rooms-list', bServer.rooms);
+      socket.emit('rooms-list', getRooms());
 
       socket.broadcast.to('main-lobby').emit('clients-list', bServer.clients);
     }
@@ -88,7 +78,11 @@ io.sockets.on('connection', function(socket) {
 
   socket.on('client-click', function(data) {
     // console.log(`A client clicked on the location x: ${data.x}, y: ${data.y}`);
-    io.sockets.to(current_client.location).emit('client-click', data);
+    if (current_client.location !== 'main-lobby') {
+      bServer.rooms[current_client.location].checkCollision(data);
+
+      io.sockets.to(current_client.location).emit('client-click', data);
+    }
     // io.sockets.emit('client-click', data);
   });
 
@@ -101,46 +95,44 @@ io.sockets.on('connection', function(socket) {
     // Emit new clients list to all clients
     console.log(`${current_client.id} disconnected!`);
 
-    if (current_client.nickname) {
-      removeClient(current_client);
-      if (current_client.location !== "main-lobby") {
-        socket.broadcast.to(current_client.location).emit('client-leave', current_client);
-      }
+    socket.broadcast.to('main-lobby').broadcast.emit('client-signoff', current_client);
 
-      socket.broadcast.to('main-lobby').broadcast.emit('client-signoff', current_client);
-      io.sockets.emit('clients-list', bServer.clients);
-    }
+    removeClient(current_client);
+
+    io.sockets.emit('clients-list', bServer.clients);
+
   });
 
   // Rooms
   socket.on('create-room', function(data) {
-    if (data.room_name.length > 0
-        && data.room_name !== 'main-lobby'
-        && !checkKeyValueExists(data.room_name, "room_name", bServer.rooms)) {
+    if (data.name.length > 0
+        && data.name !== 'main-lobby'
+        && !checkKeyValueExists(data.name, 'name', bServer.rooms)) {
 
-      data.room_owner = current_client;
+      data.owner = current_client;
+      data.clients = 1;
 
-      let new_room = addRoom(data);
-      new_room.clients = 1;
+      let new_room = new Room(data, bServer, io);
+      data.id = new_room.id;
+      bServer.rooms[data.id] = new_room;
 
       socket.leave('main-lobby');
       socket.join(new_room.id);
 
       socket.broadcast.to(current_client.location).emit('create-room-done', data);
       socket.emit('create-room-self', data);
-      socket.broadcast.to(current_client.location).emit('rooms-list', bServer.rooms);
+      socket.broadcast.to(current_client.location).emit('rooms-list', getRooms());
 
       current_client.location = new_room.id;
-
-      console.log(bServer.rooms);
+      console.log(`A client hosted a room:`, data);
     }
   });
 
   socket.on('join-room', function(data) {
-    if ((data.id && data.id !== current_client.location) || (data.room_name == 'debug')) {
+    if ((data.id && data.id !== current_client.location) || (data.name == 'debug')) {
 
-      if (data.room_name) {
-        data.id = bServer.rooms[Object.keys(bServer.rooms)[0]].id;
+      if (data.name) {
+        data.id = bServer.rooms[Object.keys(bServer.rooms)].id;
       }
 
       console.log(`${current_client.id} joined the room ${data.id}`);
@@ -149,7 +141,12 @@ io.sockets.on('connection', function(socket) {
       socket.join(data.id);
       current_client.location = data.id;
 
-      socket.emit('join-room-done', bServer.rooms[data.id]);
+      socket.emit('join-room-done', {
+        id: bServer.rooms[data.id].id,
+        name: bServer.rooms[data.id].name,
+        clients: bServer.rooms[data.id].clients
+      });
+
       bServer.rooms[data.id].clients += 1;
 
       socket.broadcast.to(current_client.location).emit('client-join', current_client);
@@ -157,7 +154,7 @@ io.sockets.on('connection', function(socket) {
       socket.broadcast.to(current_client.location).emit('clients-list', getClientsList(current_client.location));
 
       io.sockets.in('main-lobby').emit('clients-list', bServer.clients);
-      io.sockets.in('main-lobby').emit('rooms-list', bServer.rooms);
+      io.sockets.in('main-lobby').emit('rooms-list', getRooms());
     }
   });
 
@@ -171,8 +168,10 @@ io.sockets.on('connection', function(socket) {
       previous_room.clients -= 1;
 
       if (previous_room.clients < 1) {
+        bServer.rooms[previous_room_id].destroy();
+
         delete bServer.rooms[previous_room_id];
-        socket.broadcast.to('main-lobby').emit('rooms-list', bServer.rooms);
+        socket.broadcast.to('main-lobby').emit('rooms-list', getRooms());
       } else {
         socket.broadcast.to(previous_room_id).emit('client-leave', current_client);
         socket.broadcast.to(previous_room_id).emit('clients-list', getClientsList(previous_room_id));
@@ -189,7 +188,8 @@ io.sockets.on('connection', function(socket) {
 
   socket.on('rooms-list', function(data) {
     console.log('Requesting rooms list');
-    io.sockets.in('main-lobby').emit('rooms-list', bServer.rooms);
+
+    io.sockets.in('main-lobby').emit('rooms-list', getRooms());
   });
 
   socket.on('room-clients-list', function(data) {
@@ -200,14 +200,15 @@ io.sockets.on('connection', function(socket) {
     socket.emit('clients-list', clients_list);
   });
 
-  // Game
+  // Start game
   socket.on('start-game', function() {
-    let room = null;
     if (bServer.rooms[current_client.location]) {
-      room = bServer.rooms[current_client.location];
+      const room = bServer.rooms[current_client.location];
 
-      room.status = "running";
-      io.sockets.in(current_client.location).emit('start-game');
+      if (room.owner == current_client) {
+        room.setStatus('in-game');
+        io.sockets.in(current_client.location).emit('start-game');
+      }
     }
   });
 
@@ -219,8 +220,19 @@ server.listen(3000);
 
 //
 
+function getRooms() {
+  const rooms = Object.values(bServer.rooms).map(room => {
+    return {
+      id: room.id,
+      name: room.name,
+      clients: room.clients
+    };
+  });
+
+  return rooms;
+}
+
 function checkKeyValueExists(needle, key, haystack) {
-  console.log(needle, key, haystack);
   for (el_index in haystack) {
     let el = haystack[el_index];
 
@@ -248,8 +260,8 @@ function getClientsList(location) {
 
 function newClient() {
   const client = {
-    id: genID(),
-    location: "main-lobby"
+    id: nanoid(5),
+    location: 'main-lobby',
   }
 
   return client;
@@ -262,40 +274,25 @@ function addClient(client, data) {
 
   console.log(`Client signed in with nickname ${data.nickname}`);
   console.log("Current clients list (" + (Object.keys(bServer.clients).length) + "): ");
-  console.log(bServer.clients);
 
   return true;
 }
 
-function addRoom(data) {
-  let room_id = genID();
-
-  data.id = room_id;
-  data.status = "pre-game";
-
-  bServer.rooms[room_id] = data;
-  console.log(`A client hosted a room with name: ${data.room_name}`);
-  return data;
-}
-
 function removeClient(current_client) {
   if (bServer.clients[current_client.id] == current_client) {
-
     if (current_client.location !== 'main-lobby' && bServer.rooms[current_client.location]) {
       let current_room = bServer.rooms[current_client.location];
       current_room.clients -= 1;
 
       if (current_room.clients < 1) {
+        bServer.rooms[current_client.location].destroy();
+
         delete bServer.rooms[current_client.location];
       }
     }
 
     delete bServer.clients[current_client.id];
   }
-  console.log("Current clients list (" + (Object.keys(bServer.clients).length) + "): ");
-  console.log(bServer.clients);
-}
 
-function genID() {
-  return ("0000" + (Math.random()*Math.pow(36,4) << 0).toString(36)).slice(-4)
+  console.log("Current clients list (" + (Object.keys(bServer.clients).length) + "): ");
 }

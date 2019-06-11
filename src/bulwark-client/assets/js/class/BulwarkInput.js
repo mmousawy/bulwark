@@ -37,7 +37,7 @@ class BulwarkInput {
     const dm_point = {
       dx: this.INPUT.mouse.x - pointData.x,
       dy: this.INPUT.mouse.y - pointData.y
-    }
+    };
 
     let mouse_angle = Math.atan2(dm_point.dy, dm_point.dx);
 
@@ -65,7 +65,8 @@ class BulwarkInput {
   clickHandler(mouseEvent) {
     this.updateMouse(mouseEvent);
 
-    if (this.settings.bGame.settings.bRender.scene !== "game") {
+    if (this.settings.bGame.settings.bRender.settings.scene !== 'match'
+      || this.INPUT.mouse.y > 330) {
       return;
     }
 
@@ -91,10 +92,11 @@ class BulwarkInput {
 
     // Emmit cursor position on click
     bClient.settings.socket.emit('client-click', {
-      client_id: client.client_id,
+      id: client.id,
       x: this.INPUT.mouse.x,
-      y: this.INPUT.mouse.y }
-    );
+      y: this.INPUT.mouse.y,
+      distance
+    });
   }
 
   inputLoop() {
