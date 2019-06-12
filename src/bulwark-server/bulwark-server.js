@@ -1,10 +1,10 @@
+console.log('>>> Starting server... ' + new Date());
+
 const nanoid = require('nanoid');
 const Room = require('./Room');
 const bServer = require('./Server');
 const io = require('./Socket').io;
 const server = require('./Socket').server;
-
-console.log('>>> Starting server...');
 
 console.log('[1/2] Server and socket.io module loaded');
 
@@ -216,10 +216,7 @@ io.sockets.on('connection', function(socket) {
 
 console.log('[2/2] Server ready and listening for connections');
 
-server.listen(3000);
-
 //
-
 function getRooms() {
   const rooms = Object.values(bServer.rooms).map(room => {
     return {

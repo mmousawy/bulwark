@@ -40,7 +40,7 @@ class BulwarkClient {
 
   connect() {
     console.log("Initializing socket");
-    this.settings.socket = io('http://86.83.107.101:3000/', { 'force new connection': true });
+    this.settings.socket = io('https://murtada.nl/projects/bulwark/socket', { 'force new connection': true });
     this.settings.clients = [];
     this.settings.clients_ids = {};
     this.settings.enemies = [];
