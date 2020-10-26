@@ -224,21 +224,21 @@ class BulwarkGame {
 
   logicLoop(bRender, bGame, bInput, bClient) {
 
-    if (bRender.settings.current_client) {
+    if (bRender.settings.current_player) {
       const newRotation = bInput.mouseAngleFromPoint({
-        x: bRender.settings.current_client.position.x + bRender.settings.current_client.gun.position.x * .5,
-        y: bRender.settings.current_client.position.y + bRender.settings.current_client.gun.position.y * .5
+        x: bRender.settings.current_player.position.x + bRender.settings.current_player.gun.position.x * .5,
+        y: bRender.settings.current_player.position.y + bRender.settings.current_player.gun.position.y * .5
       });
 
-      // if (newRotation > (bRender.settings.current_client.gun.rotation + .025)
-      //     || newRotation < (bRender.settings.current_client.gun.rotation - .025)) {
-        bRender.settings.current_client.gun.rotation = newRotation;
+      // if (newRotation > (bRender.settings.current_player.gun.rotation + .025)
+      //     || newRotation < (bRender.settings.current_player.gun.rotation - .025)) {
+        bRender.settings.current_player.gun.rotation = newRotation;
 
         bClient.settings.socket.emit('client-update', {
           id: bClient.settings.current_client.id,
-          rotation: bRender.settings.current_client.gun.rotation,
-          x: bRender.settings.current_client.x,
-          y: bRender.settings.current_client.y
+          rotation: bRender.settings.current_player.gun.rotation,
+          x: bRender.settings.current_player.x,
+          y: bRender.settings.current_player.y
         });
       // }
     }
