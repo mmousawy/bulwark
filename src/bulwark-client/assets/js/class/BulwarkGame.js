@@ -188,6 +188,16 @@ class BulwarkGame {
       bUI.hide();
     });
 
+    // Stop game
+    bPubSub.subscribe("stop-game", () => {
+      console.log(">>> Stopping game!");
+
+      bRender.destroyMatch();
+      bRender.initIntro();
+      bUI.show();
+      bUI.showRoom();
+    });
+
     bUI.init(bRender, bGame, bInput, bClient, bUI, bPubSub);
     bClient.init(canvas_holder, bRender, bGame, bInput, bClient, bUI, bPubSub);
   }
