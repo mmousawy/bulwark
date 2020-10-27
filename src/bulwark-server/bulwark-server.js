@@ -1,12 +1,10 @@
-console.log('>>> Starting server... ' + new Date());
+console.log(`[note]: Starting server @ ${prettyDate()}`);
 
 const nanoid = require('nanoid');
 const Room = require('./Room');
 const bServer = require('./Server');
-const io = require('./Socket').io;
-const server = require('./Socket').server;
 
-console.log('[1/2] Server and socket.io module loaded');
+const io = require('./Socket').io;
 
 io.sockets.on('connection', function(socket) {
   const current_client = newClient();
@@ -207,16 +205,12 @@ io.sockets.on('connection', function(socket) {
 
       if (room.owner == current_client) {
         room.setStatus('in-game');
-        io.sockets.in(current_client.location).emit('start-game');
       }
     }
   });
 
 });
 
-console.log('[2/2] Server ready and listening for connections');
-
-//
 function getRooms() {
   const rooms = Object.values(bServer.rooms).map(room => {
     return {
@@ -293,3 +287,13 @@ function removeClient(current_client) {
 
   console.log("Current clients list (" + (Object.keys(bServer.clients).length) + "): ");
 }
+
+function prettyDate() {
+  const date = new Date();
+  return date.getFullYear() + '-' +
+         (date.getMonth() + 1).toString().padStart(2, '0') + '-' +
+         date.getDate().toString().padStart(2, '0') + ' ' +
+         date.getHours().toString().padStart(2, '0') + ':' +
+         date.getMinutes().toString().padStart(2, '0') + ':' +
+         date.getSeconds().toString().padStart(2, '0');
+};

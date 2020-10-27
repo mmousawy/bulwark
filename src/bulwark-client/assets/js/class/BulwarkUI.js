@@ -44,6 +44,8 @@ class BulwarkUI {
             const chat_input = modal.querySelector("input.chat_input[type=text]");
             const room_title = modal.querySelector(".title--room");
 
+            console.log(that.settings.bClient.settings.current_client);
+
             room_title.innerHTML += `: ${that.settings.bClient.settings.current_client.location}`;
 
             room_leave_button.addEventListener("click", function() {
@@ -244,7 +246,8 @@ class BulwarkUI {
       removeModal:    this.removeModal.bind(this),
       addChatMessage: this.addChatMessage.bind(this),
       init:           this.init.bind(this),
-      hide:           this.hide.bind(this)
+      hide:           this.hide.bind(this),
+      show:           this.show.bind(this),
     }
   }
 
@@ -262,6 +265,10 @@ class BulwarkUI {
 
   hide() {
     this.modal_overlay.classList.add('is-hidden');
+  }
+
+  show() {
+    this.modal_overlay.classList.remove('is-hidden');
   }
 
   createRoom(data) {

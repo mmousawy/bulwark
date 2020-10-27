@@ -24,7 +24,9 @@ class BulwarkRender {
       createEnemySprite: this.createEnemySprite.bind(this),
       renderLoopMain:  this.renderLoopMain.bind(this),
       renderLoopIntro: this.renderLoopIntro.bind(this),
-      initMatch:       this.initMatch.bind(this)
+      initMatch:       this.initMatch.bind(this),
+      initIntro:       this.initIntro.bind(this),
+      destroyMatch:    this.destroyMatch.bind(this),
     }
   }
 
@@ -223,6 +225,13 @@ class BulwarkRender {
     this.settings.stage.addChild(this.scenes.match);
   }
 
+  destroyMatch() {
+    if (this.settings.scene == 'match') {
+      this.scenes.match.destroy();
+      delete this.scenes.match;
+    }
+  }
+
   componentToHex(c) {
     var hex = c.toString(16);
     return hex.length == 1 ? "0" + hex : hex;
@@ -301,15 +310,15 @@ class BulwarkRender {
   }
 
   createPlayerSprite(data, bRender, is_self) {
-    const client = new PIXI.Container();
-    client.scale.x = .5;
-    client.scale.y = .5;
+    const player = new PIXI.Container();
+    player.scale.x = .5;
+    player.scale.y = .5;
 
     const base = new PIXI.Sprite.from(this.sprites.cannon_01_base.texture);
     const gun = new PIXI.Sprite.from(this.sprites.cannon_01_gun.texture);
 
     gun.position.x = 62;
-  gun.position.y = 72;
+    gun.position.y = 72;
     gun.velocity = {
       x: 0,
       y: 0
@@ -320,25 +329,25 @@ class BulwarkRender {
       y: 72
     };
 
-    client.addChild(base);
-    client.addChild(gun);
-    client.z = 5;
+    player.addChild(base);
+    player.addChild(gun);
+    player.z = 5;
 
-    client.gun = gun;
+    player.gun = gun;
 
     gun.anchor.x = 0.175;
     gun.anchor.y = 0.475;
 
-    client.x = data.position.x || bRender.settings.stage_width * Math.random();
-    client.y = 275;
+    player.x = data.position.x || bRender.settings.stage_width * Math.random();
+    player.y = 275;
 
-    bRender.settings.players.addChild(client);
+    bRender.settings.players.addChild(player);
 
     if (is_self) {
-      bRender.settings.current_client = client;
+      bRender.settings.current_player = player;
     }
 
-    return client;
+    return player;
   }
 
   createEnemySprite(data, bRender, is_self) {

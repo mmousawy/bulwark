@@ -2,7 +2,6 @@ const nanoid = require('nanoid');
 const Enemy = require('./Enemy');
 const bServer = require('./Server');
 const io = require('./Socket').io;
-const socket = require('./Socket').socket;
 
 class Room
 {
@@ -13,14 +12,8 @@ class Room
     this.status = data.status || 'lobby';
     this.owner = data.owner;
     this.clients = data.clients;
-    this.ticks = 0;
-    this.ticker = null;
-    this.newWaveDelay = 10 * bServer.settings.clientServerTimeDeltaMultiplier;
     this.boundTick = this.nextTick.bind(this);
-    this.wave = 0;
-    this.currentWave;
-
-    this.lastTickEnemySpawn = 0;
+    this.newWaveDelay = 30;
 
     this.waves = {
       1: {
@@ -51,12 +44,23 @@ class Room
         maxTickDistance: 20,
         velocityMultiplier: 5
       }
-    }
+    };
+
+    this.resetRoom();
+  }
+
+  resetRoom()
+  {
+    this.ticks = 0;
+    this.ticker = null;
+    this.wave = 0;
+    this.currentWave = null;
+    this.lastTickEnemySpawn = 0;
   }
 
   destroy()
   {
-    this.ticker && clearTimeout(this.ticker);
+    this.stopTicks();
   }
 
   setStatus(status)
@@ -65,8 +69,20 @@ class Room
     this.status = status;
 
     if (this.status === 'in-game') {
+      this.resetRoom();
       this.startTicks();
+      io.sockets.in(this.id).emit('start-game');
     }
+
+    if (this.status === 'lobby') {
+      this.stopTicks();
+      io.sockets.in(this.id).emit('stop-game');
+    }
+  }
+
+  stopTicks()
+  {
+    this.ticker && clearTimeout(this.ticker);
   }
 
   startTicks()
@@ -76,6 +92,10 @@ class Room
 
   nextTick()
   {
+    if (this.status !== 'in-game') {
+      return;
+    }
+
     if (this.wave === 0) {
       // Broadcast to all players the match is starting
       this.nextWave();
@@ -86,6 +106,8 @@ class Room
       // While in a wave, do all the logic
       this.spawner();
     }
+
+    console.log(this.wave, this.currentWave.startTick, this.ticks);
 
     const waveData = this.waves[this.wave];
 
@@ -117,6 +139,8 @@ class Room
     // All spawning logic
     const waveData = this.waves[this.wave];
 
+    console.log(this.waves);
+
     if (this.currentWave.enemiesSpawned >= waveData.enemiesCount) {
       // If the current amount of enemies exceeds the amount of enemies
       // in this wave, just return
@@ -127,6 +151,8 @@ class Room
 
     if (tickDeltaLastSpawn > waveData.minTickDistance) {
       const spawnChance = Math.round(Math.random()) || tickDeltaLastSpawn >= waveData.maxEnemiesPerTick;
+
+      console.log(spawnChance);
 
       if (spawnChance) {
         this.spawnEnemy();
@@ -148,6 +174,13 @@ class Room
 
   nextWave()
   {
+    if (!this.waves[this.wave + 1]) {
+      // No more waves left
+      this.setStatus('lobby');
+
+      return;
+    }
+
     this.wave++;
     this.lastTickEnemySpawn = this.ticks + this.newWaveDelay;
     this.currentWave = {

@@ -40,7 +40,7 @@ class BulwarkClient {
 
   connect() {
     console.log("Initializing socket");
-    this.settings.socket = io('https://murtada.nl/projects/bulwark/socket', { 'force new connection': true });
+    this.settings.socket = io('wss://murtada.nl:64782');
     this.settings.clients = [];
     this.settings.clients_ids = {};
     this.settings.enemies = [];
@@ -169,6 +169,10 @@ class BulwarkClient {
       this.settings.bPubSub.publish("start-game");
     });
 
+    this.settings.socket.on('stop-game', () => {
+      this.settings.bPubSub.publish("stop-game");
+    });
+
     this.settings.socket.on('enemy-spawn', (data) => {
       const callback = this.handleEnemySpawn.bind(this);
       callback(data);
@@ -275,8 +279,12 @@ class BulwarkClient {
 
     this.settings.bUI.showLobby();
 
-    data.message = `You joined the room "${this.settings.current_client.location}"`;
-    this.settings.bUI.addChatMessage(data, 'server-message-self');
+    const newMessage = {
+      nickname: data.nickname,
+      message: `You joined the room "${this.settings.current_client.location}"`
+    };
+
+    this.settings.bUI.addChatMessage(newMessage, 'server-message-self');
   }
 
   handleClientUpdate(data) {
@@ -299,7 +307,7 @@ class BulwarkClient {
       console.log(data);
 
       if (is_self) {
-        this.settings.current_client = data;
+        this.settings.current_player = data;
         console.log(`You have joined with id: ${data.id}`);
       }
     }

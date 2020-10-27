@@ -70,7 +70,7 @@ class BulwarkInput {
       return;
     }
 
-    const client = this.settings.bClient.settings.current_client;
+    const client = this.settings.bClient.settings.current_player;
 
     const pointData = {
       x: client.sprite.position.x + client.sprite.gun.position.x * .5,
